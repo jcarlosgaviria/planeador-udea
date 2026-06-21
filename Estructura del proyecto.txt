@@ -1,0 +1,25 @@
+planeador-udea/
+├── README.md                          ← Inicio rápido y roadmap
+├── docker-compose.yml                 ← Levanta todo con un comando
+├── .env.example                       ← Template de variables de entorno
+├── .gitignore
+├── frontend/
+│   ├── Dockerfile
+│   ├── package.json                   ← React + Vite + Recharts
+│   └── src/
+│       ├── App.jsx                    ← Componente raíz
+│       ├── data/mallas.js             ← Mallas curriculares como módulo
+│       └── models/predictivo.js       ← Modelos ML reutilizables
+├── backend/
+│   ├── Dockerfile
+│   ├── requirements.txt               ← FastAPI + SQLAlchemy + Anthropic
+│   └── src/
+│       ├── main.py                    ← API principal
+│       ├── config/settings.py         ← Configuración centralizada
+│       ├── models/database.py         ← Tablas PostgreSQL
+│       └── routes/predicciones.py     ← Endpoints de modelos IA
+└── infra/
+    ├── nginx/nginx.conf               ← SSL, rate limiting, proxy
+    ├── docker/init.sql                ← BD inicial con los 6 programas
+    ├── deploy.sh                      ← Script de despliegue automatizado
+    └── README.md                      ← Guía AWS / GCP / Azure con costos

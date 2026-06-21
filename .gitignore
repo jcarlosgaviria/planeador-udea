@@ -1,0 +1,51 @@
+# Variables de entorno — NUNCA subir al repositorio
+.env
+.env.local
+.env.production
+*.env
+
+# Node
+node_modules/
+frontend/dist/
+frontend/.vite/
+*.log
+npm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Docker
+.docker/
+
+# Base de datos
+*.sqlite
+*.db
+backups/*.sql
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Certificados SSL
+infra/nginx/certs/
+*.pem
+*.key
+*.crt
+
+# Modelos entrenados (si se guardan localmente)
+backend/models/*.pkl
+backend/models/*.joblib

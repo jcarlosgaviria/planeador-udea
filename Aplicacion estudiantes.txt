@@ -1,0 +1,97 @@
+===========================================================
+RESUMEN: PLANEANDO EL TIEMPO EN LA UNIVERSIDAD
+Facultad de Ingeniería - Universidad de Antioquia (UdeA)
+Taller de Inducción - Enero 27 de 2024
+===========================================================
+
+1. OBJETIVO PRINCIPAL
+--------------------
+Comprender cuánto tiempo REAL debo invertir como estudiante de ingeniería 
+para cumplir mi propósito formativo. No se trata solo de "asistir a clase", 
+sino de planificar el estudio autónomo.
+
+2. CONCEPTO DE PLANEACIÓN
+-------------------------
+Es analizar tu situación actual, definir hacia dónde quieres ir (graduarte) 
+y establecer las estrategias (horarios, hábitos) para lograrlo.
+
+3. LA CLAVE: RELACIÓN CRÉDITOS - HORAS DE CLASE
+-----------------------------------------------
+La Universidad de Antioquia maneja estas equivalencias OBLIGATORIAS:
+
+- 1 crédito = 2 horas de clase a la semana.
+  * EXCEPCIÓN: Cursos de Inglés (1 crédito = 4 horas a la semana).
+
+- 3 créditos = 4 horas de clase a la semana. 
+  (Este es el estándar para la mayoría de materias teóricas).
+
+- 4 créditos = 7 horas de clase a la semana.
+  (Generalmente materias con laboratorio o proyectos prácticos).
+
+EJEMPLO PRÁCTICO:
+Si matriculas 5 materias de 3 créditos (15 créditos totales):
+-> 5 x 4 horas = 20 horas semanales SOLO en clases presenciales.
+
+4. TIEMPO RECOMENDADO PARA ESTUDIO INDEPENDIENTE (FUERA DE CLASE)
+-----------------------------------------------------------------
+Para un óptimo rendimiento, el taller sugiere hacer DOS cosas por cada materia:
+
+A) Lectura diaria: 20 minutos por materia, 6 días a la semana.
+B) Estudio profundo: 2 horas semanales por materia.
+
+CÁLCULO PARA 5 MATERIAS:
+- Lectura diaria: 5 materias x 20 min = 100 min/día (1.6 h) x 6 días = 10 h/semana.
+- Estudio profundo: 5 materias x 2 h = 10 h/semana.
+-> Total de estudio independiente = 20 horas semanales.
+
+5. CARGA HORARIA TOTAL (EL DATO CRÍTICO)
+----------------------------------------
+Tu semana universitaria REAL se calcula así:
+
+TOTAL SEMANAL = Horas de clase + Horas de estudio independiente
+
+Siguiendo el ejemplo de 5 materias:
+20 h (clase) + 20 h (estudio) = 40 horas semanales.
+
+ESTO EQUIVALE A UN TRABAJO DE TIEMPO COMPLETO.
+Si además trabajas, tienes desplazamientos largos (ej. 3h diarias en bus) 
+o cuidas familiares, tu carga puede subir a 50-60 horas semanales.
+
+6. TABLA DE PRIORIDADES (Ejercicio de autoevaluación)
+-----------------------------------------------------
+El taller incluye una tabla donde asignas prioridad del 1 (baja) al 3 (alta) 
+a tus actividades actuales (familia, ocio, redes, deporte, estudio).
+
+ADVERTENCIA: Si pones prioridad "3" a salir con amigos y "1" a estudiar, 
+la planeación no funcionará. Debes alinear tus prioridades con tu meta 
+de ser ingeniero.
+
+7. PASOS PARA HACER TU PROPIA PLANEACIÓN (Acción práctica)
+----------------------------------------------------------
+Paso 1: Revisa la malla curricular oficial:
+https://ingenieria2.udea.edu.co/cursum/#/publico/programas
+
+Paso 2: Elige tus materias y suma los créditos.
+
+Paso 3: Calcula tus horas de clase (usa la regla: 3cr=4h, 4cr=7h).
+
+Paso 4: Calcula tu estudio independiente (2h por materia + lectura diaria).
+
+Paso 5: Resta tus horas fijas diarias (sueño: 8h, comida: 2h, 
+desplazamiento: variable).
+
+Paso 6: Compara. Usa la fórmula de la semana (168 horas totales):
+168h - (sueño + comida + desplazamiento + clase + estudio) = HORAS LIBRES.
+
+Si el resultado es menor a 5 horas semanales de ocio, DEBES reducir 
+el número de materias matriculadas para evitar el fracaso académico.
+
+8. CONCLUSIÓN FINAL
+-------------------
+La planeación no es un simple horario, es un ACTO DE RESPONSABILIDAD. 
+Reconocer tus límites de tiempo te permite tomar decisiones inteligentes 
+y evitar sobrecargas que lleven al abandono de materias.
+
+===========================================================
+FIN DEL RESUMEN
+===========================================================

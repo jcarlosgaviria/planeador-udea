@@ -1,0 +1,91 @@
+version: '3.9'
+
+services:
+
+  # ── Frontend React ──
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://backend:8000
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend/src:/app/src   # hot reload en desarrollo
+    networks:
+      - udea-net
+
+  # ── Backend FastAPI ──
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://udea:udea2024@db:5432/planeador
+      - REDIS_URL=redis://redis:6379
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - SECRET_KEY=${SECRET_KEY}
+      - ENVIRONMENT=development
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./backend/src:/app/src
+    networks:
+      - udea-net
+
+  # ── Base de datos PostgreSQL ──
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: udea
+      POSTGRES_PASSWORD: udea2024
+      POSTGRES_DB: planeador
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U udea -d planeador"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - udea-net
+
+  # ── Cache Redis ──
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    networks:
+      - udea-net
+
+  # ── Nginx (proxy reverso + SSL) ──
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - udea-net
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  udea-net:
+    driver: bridge
