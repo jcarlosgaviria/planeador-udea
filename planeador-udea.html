@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planeador Académico — Facultad de Ingeniería UdeA</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root {
+    --verde-udea: #008000;
+    --verde-claro: #e8f5e9;
+    --verde-medio: #4caf50;
+    --azul-udea: #1a237e;
+    --azul-claro: #e3f2fd;
+    --azul-medio: #1976d2;
+    --gris-bg: #f5f6fa;
+    --gris-card: #ffffff;
+    --gris-borde: #e0e0e0;
+    --gris-texto: #424242;
+    --gris-suave: #757575;
+    --naranja: #ff6f00;
+    --naranja-claro: #fff3e0;
+    --rojo: #c62828;
+    --rojo-claro: #ffebee;
+    --font: 'Segoe UI', system-ui, sans-serif;
+    --radius: 10px;
+    --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--gris-bg); color: var(--gris-texto); min-height: 100vh; }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, var(--azul-udea) 0%, #283593 100%);
+    color: white; padding: 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  }
+  .header-inner {
+    max-width: 900px; margin: 0 auto;
+    padding: 16px 20px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .header-logo {
+    width: 48px; height: 48px; border-radius: 12px;
+    background: rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+  }
+  .header h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+  .header p { font-size: 12px; opacity: 0.75; margin-top: 2px; }
+  .header-badge {
+    margin-left: auto; background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 20px; padding: 4px 12px;
+    font-size: 11px; white-space: nowrap;
+  }
+
+  /* SAVE BAR */
+  .save-bar {
+    background: white; border-bottom: 1px solid var(--gris-borde);
+    padding: 8px 20px; display: flex; align-items: center;
+    justify-content: space-between; font-size: 12px; color: var(--gris-suave);
+    max-width: 900px; margin: 0 auto;
+  }
+  .save-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--verde-medio); display: inline-block; margin-right: 6px; }
+  .save-dot.saving { background: var(--naranja); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .btn-sm { padding: 4px 10px; font-size: 11px; border: 1px solid var(--gris-borde); border-radius: 6px; background: white; cursor: pointer; color: var(--gris-texto); }
+  .btn-sm:hover { background: var(--gris-bg); }
+  .btn-danger-sm { border-color: #ef9a9a; color: var(--rojo); }
+
+  /* MAIN LAYOUT */
+  .main { max-width: 900px; margin: 0 auto; padding: 20px; }
+
+  /* PROGRAM SELECTOR */
+  .section-card {
+    background: white; border-radius: var(--radius);
+    box-shadow: var(--shadow); margin-bottom: 16px;
+    border: 1px solid var(--gris-borde);
+  }
+  .section-card-header {
+    padding: 14px 20px; border-bottom: 1px solid var(--gris-borde);
+    font-size: 13px; font-weight: 600; color: var(--azul-udea);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-card-body { padding: 16px 20px; }
+  .prog-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 10px; }
+  .prog-card {
+    padding: 12px 14px; border: 2px solid var(--gris-borde);
+    border-radius: var(--radius); cursor: pointer; transition: all 0.15s;
+    background: var(--gris-bg); position: relative;
+  }
+  .prog-card:hover { border-color: var(--azul-medio); background: var(--azul-claro); }
+  .prog-card.active { border-color: var(--azul-medio); background: var(--azul-claro); }
+  .prog-card .pn { font-size: 12px; font-weight: 600; color: var(--azul-udea); }
+  .prog-card .pm { font-size: 11px; color: var(--gris-suave); margin-top: 3px; }
+  .prog-card .saved { position: absolute; top: 6px; right: 6px; font-size: 9px; background: var(--verde-claro); color: var(--verde-udea); padding: 1px 5px; border-radius: 10px; font-weight: 600; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; background: var(--gris-bg); padding: 4px; border-radius: 10px; margin-bottom: 16px; }
+  .tab { flex: 1; padding: 8px 4px; font-size: 12px; border: none; border-radius: 8px; background: transparent; color: var(--gris-suave); cursor: pointer; font-weight: 500; transition: all 0.15s; }
+  .tab.active { background: white; color: var(--azul-udea); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+  /* SUB NAV */
+  .sub-nav { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .sub-btn { padding: 6px 12px; font-size: 11px; border: 1px solid var(--gris-borde); border-radius: 20px; background: white; color: var(--gris-suave); cursor: pointer; transition: all 0.12s; }
+  .sub-btn:hover { border-color: var(--azul-medio); color: var(--azul-medio); }
+  .sub-btn.active { background: var(--azul-udea); color: white; border-color: var(--azul-udea); }
+
+  /* PANELS */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* FORM */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-group label { font-size: 11px; color: var(--gris-suave); display: block; margin-bottom: 4px; font-weight: 500; }
+  .form-group select, .form-group input[type=number] {
+    width: 100%; padding: 7px 10px; font-size: 13px;
+    border: 1px solid var(--gris-borde); border-radius: 8px;
+    background: white; color: var(--gris-texto);
+    transition: border-color 0.15s;
+  }
+  .form-group select:focus, .form-group input:focus { outline: none; border-color: var(--azul-medio); }
+  .btn-primary {
+    padding: 9px 20px; font-size: 13px; font-weight: 600;
+    background: var(--azul-udea); color: white; border: none;
+    border-radius: 8px; cursor: pointer; transition: all 0.15s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-primary:hover { background: #283593; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,35,126,0.3); }
+
+  /* CHECKBOXES */
+  .chk-list { display: flex; flex-direction: column; gap: 0; }
+  .chk-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--gris-borde); font-size: 12px; cursor: pointer; }
+  .chk-item:last-child { border-bottom: none; }
+  .chk-item input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--azul-udea); flex-shrink: 0; }
+  .chk-item span { flex: 1; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; }
+  .badge-blue { background: var(--azul-claro); color: var(--azul-medio); }
+  .badge-green { background: var(--verde-claro); color: var(--verde-udea); }
+  .badge-orange { background: var(--naranja-claro); color: var(--naranja); }
+  .badge-red { background: var(--rojo-claro); color: var(--rojo); }
+  .badge-gray { background: #f5f5f5; color: #757575; }
+
+  /* METRICS */
+  .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 10px; margin-bottom: 16px; }
+  .metric { background: white; border: 1px solid var(--gris-borde); border-radius: var(--radius); padding: 14px 16px; }
+  .metric .ml { font-size: 11px; color: var(--gris-suave); margin-bottom: 4px; }
+  .metric .mv { font-size: 24px; font-weight: 700; color: var(--azul-udea); }
+  .metric .ms { font-size: 10px; color: var(--gris-suave); margin-top: 2px; }
+
+  /* SEMAFORO */
+  .semaforo { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: var(--radius); font-size: 13px; font-weight: 500; margin-bottom: 14px; border: 1px solid; }
+  .semaforo.verde { background: var(--verde-claro); color: #1b5e20; border-color: #a5d6a7; }
+  .semaforo.amarillo { background: var(--naranja-claro); color: #e65100; border-color: #ffcc80; }
+  .semaforo.rojo { background: var(--rojo-claro); color: var(--rojo); border-color: #ef9a9a; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dot.verde { background: var(--verde-medio); }
+  .dot.amarillo { background: var(--naranja); }
+  .dot.rojo { background: var(--rojo); }
+
+  /* TABLA MATERIAS */
+  .mat-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .mat-table th { padding: 8px 10px; background: var(--gris-bg); color: var(--gris-suave); font-weight: 600; text-align: left; border-bottom: 1px solid var(--gris-borde); }
+  .mat-table td { padding: 8px 10px; border-bottom: 1px solid var(--gris-borde); }
+  .mat-table tr:last-child td { border-bottom: none; }
+  .nota-inp { width: 58px; padding: 4px 6px; font-size: 12px; border: 1px solid var(--gris-borde); border-radius: 6px; text-align: center; }
+  .nota-inp:focus { outline: none; border-color: var(--azul-medio); }
+
+  /* ALERTAS */
+  .alerta { padding: 10px 14px; border-radius: var(--radius); font-size: 12px; margin-bottom: 8px; display: flex; gap: 10px; align-items: flex-start; border: 1px solid; }
+  .alerta.danger { background: var(--rojo-claro); border-color: #ef9a9a; color: var(--rojo); }
+  .alerta.warning { background: var(--naranja-claro); border-color: #ffcc80; color: #e65100; }
+  .alerta.success { background: var(--verde-claro); border-color: #a5d6a7; color: #1b5e20; }
+  .alerta.info { background: var(--azul-claro); border-color: #90caf9; color: var(--azul-udea); }
+
+  /* MALLA VISUAL */
+  .malla-wrap { overflow-x: auto; padding-bottom: 8px; }
+  .malla-grid { display: flex; gap: 10px; min-width: max-content; }
+  .sem-col { display: flex; flex-direction: column; gap: 5px; min-width: 105px; }
+  .sem-label { font-size: 10px; font-weight: 700; color: var(--azul-udea); text-align: center; padding: 4px; background: var(--azul-claro); border-radius: 6px; margin-bottom: 2px; }
+  .mat-node { padding: 6px 8px; border-radius: 7px; font-size: 10px; line-height: 1.3; cursor: pointer; border: 1.5px solid; transition: all 0.12s; }
+  .mat-node:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,0.15); }
+  .mat-node.aprobada { background: var(--verde-claro); border-color: #81c784; color: #1b5e20; }
+  .mat-node.en-curso { background: var(--azul-claro); border-color: var(--azul-medio); color: var(--azul-udea); border-width: 2px; font-weight: 600; }
+  .mat-node.en-riesgo { background: var(--naranja-claro); border-color: #ffb74d; color: #e65100; }
+  .mat-node.pendiente { background: white; border-color: var(--gris-borde); color: var(--gris-suave); }
+  .mat-node.bloqueada { background: #f5f5f5; border-color: #e0e0e0; color: #bdbdbd; }
+  .mat-node .mn-cr { font-size: 9px; opacity: 0.7; margin-top: 2px; }
+
+  /* LEYENDA */
+  .leyenda { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .ley-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--gris-suave); }
+  .ley-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+  /* PROGRESO */
+  .prog-bar-wrap { margin-bottom: 14px; }
+  .prog-bar-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--gris-suave); margin-bottom: 4px; }
+  .prog-bar { height: 8px; background: var(--gris-borde); border-radius: 4px; overflow: hidden; }
+  .prog-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--verde-medio), var(--verde-udea)); transition: width 0.5s; }
+
+  /* BALANCE */
+  .balance-item { margin-bottom: 8px; }
+  .balance-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--gris-suave); margin-bottom: 3px; }
+  .balance-bar { height: 6px; background: var(--gris-borde); border-radius: 3px; overflow: hidden; }
+  .balance-fill { height: 100%; border-radius: 3px; }
+
+  /* PREREQ */
+  .prereq-item { padding: 8px 12px; border-radius: 8px; font-size: 12px; margin-bottom: 6px; border-left: 3px solid; }
+  .prereq-item.bloqueado { background: var(--rojo-claro); border-color: var(--rojo); color: var(--rojo); }
+  .prereq-item.correq { background: var(--naranja-claro); border-color: var(--naranja); color: #e65100; }
+  .prereq-item.libre { background: var(--verde-claro); border-color: var(--verde-medio); color: #1b5e20; }
+  .sem-chip { display: inline-block; padding: 1px 6px; background: rgba(0,0,0,0.06); border-radius: 10px; font-size: 10px; margin-left: 5px; }
+
+  /* DETALLE MATERIA */
+  .mat-detail { background: var(--gris-bg); border-radius: var(--radius); padding: 12px 14px; margin-top: 12px; font-size: 12px; border: 1px solid var(--gris-borde); }
+  .mat-detail h3 { font-size: 13px; font-weight: 600; color: var(--azul-udea); margin-bottom: 8px; }
+  .detail-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--gris-borde); color: var(--gris-suave); font-size: 11px; }
+  .detail-row:last-child { border-bottom: none; }
+
+  /* PREDICTIVO */
+  .pred-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; margin-bottom: 14px; }
+  .pred-card { padding: 14px; border-radius: var(--radius); border: 1px solid; cursor: pointer; transition: all 0.12s; }
+  .pred-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+  .pred-card .pc-ico { font-size: 22px; margin-bottom: 6px; }
+  .pred-card .pc-title { font-size: 12px; font-weight: 600; }
+  .pred-card .pc-val { font-size: 20px; font-weight: 700; margin-top: 4px; }
+  .pred-card .pc-sub { font-size: 10px; margin-top: 2px; opacity: 0.8; }
+  .pred-card.riesgo { background: var(--rojo-claro); border-color: #ef9a9a; color: var(--rojo); }
+  .pred-card.grad { background: var(--azul-claro); border-color: #90caf9; color: var(--azul-udea); }
+  .pred-card.rec { background: var(--verde-claro); border-color: #a5d6a7; color: #1b5e20; }
+  .pred-card.deser { background: var(--naranja-claro); border-color: #ffcc80; color: #e65100; }
+
+  .factor-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--gris-borde); font-size: 12px; }
+  .factor-row:last-child { border-bottom: none; }
+  .factor-name { flex: 1; color: var(--gris-suave); }
+  .factor-bar-wrap { width: 80px; height: 5px; background: var(--gris-borde); border-radius: 3px; overflow: hidden; }
+  .factor-bar-fill { height: 100%; border-radius: 3px; background: var(--azul-medio); }
+  .factor-val { font-size: 11px; font-weight: 600; min-width: 30px; text-align: right; }
+
+  .rec-item { padding: 10px 12px; border: 1px solid; border-radius: var(--radius); margin-bottom: 8px; display: flex; gap: 10px; align-items: flex-start; }
+  .rec-item.alta { background: var(--rojo-claro); border-color: #ef9a9a; }
+  .rec-item.media { background: var(--naranja-claro); border-color: #ffcc80; }
+  .rec-item.baja { background: var(--verde-claro); border-color: #a5d6a7; }
+  .rec-item .ri-ico { font-size: 16px; flex-shrink: 0; margin-top: 2px; }
+  .rec-item .ri-title { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+  .rec-item .ri-desc { font-size: 11px; line-height: 1.5; opacity: 0.85; }
+
+  .tl-item { display: flex; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--gris-borde); font-size: 12px; }
+  .tl-item:last-child { border-bottom: none; }
+  .tl-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+  .tl-dot.pasado { background: var(--verde-medio); }
+  .tl-dot.actual { background: var(--azul-medio); }
+  .tl-dot.futuro { background: var(--gris-borde); }
+  .tl-dot.meta { background: var(--naranja); }
+
+  .gauge-wrap { text-align: center; margin-bottom: 12px; }
+  .gauge-pct { font-size: 28px; font-weight: 700; }
+  .gauge-sub { font-size: 12px; color: var(--gris-suave); margin-top: 2px; }
+
+  .ia-box { background: var(--gris-bg); border: 1px solid var(--gris-borde); border-radius: var(--radius); padding: 14px; font-size: 13px; line-height: 1.7; white-space: pre-wrap; margin-top: 10px; color: var(--gris-texto); }
+
+  .restored-banner { display: none; padding: 10px 16px; background: var(--verde-claro); border: 1px solid #a5d6a7; border-radius: var(--radius); font-size: 12px; color: #1b5e20; margin-bottom: 14px; align-items: center; gap: 8px; }
+
+  .sep { border: none; border-top: 1px solid var(--gris-borde); margin: 14px 0; }
+
+  @media(max-width:600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .metric-grid { grid-template-columns: 1fr 1fr; }
+    .pred-cards { grid-template-columns: 1fr 1fr; }
+    .header h1 { font-size: 15px; }
+    .header-badge { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="header-logo">🎓</div>
+    <div>
+      <h1>Planeador Académico UdeA</h1>
+      <p>Facultad de Ingeniería · 6 programas · Modelos predictivos con IA</p>
+    </div>
+    <div class="header-badge">🧠 IA integrada</div>
+  </div>
+</div>
+
+<div style="max-width:900px;margin:0 auto">
+  <div class="save-bar">
+    <span><span class="save-dot" id="save-dot"></span><span id="save-msg">Listo</span></span>
+    <span style="display:flex;gap:6px">
+      <button class="btn-sm" onclick="exportar()">⬇ Exportar</button>
+      <button class="btn-sm btn-danger-sm" onclick="resetear()">🗑 Resetear</button>
+    </span>
+  </div>
+</div>
+
+<div class="main">
+  <div class="restored-banner" id="restored-banner">
+    ✅ <span id="restored-msg">Progreso restaurado.</span>
+  </div>
+
+  <!-- SELECTOR PROGRAMA -->
+  <div class="section-card">
+    <div class="section-card-header">🎓 Selecciona tu programa</div>
+    <div class="section-card-body">
+      <div class="prog-grid" id="prog-grid"></div>
+    </div>
+  </div>
+
+  <div id="main-app" style="display:none">
+    <!-- TABS PRINCIPALES -->
+    <div class="tabs">
+      <button class="tab active" onclick="showSection('academico')">📚 Académico</button>
+      <button class="tab" onclick="showSection('predictivo')">🧠 Predictivo IA</button>
+    </div>
+
+    <!-- ══ SECCIÓN ACADÉMICA ══ -->
+    <div id="section-academico">
+      <div class="sub-nav">
+        <button class="sub-btn active" onclick="showPanel('config','academico')">⚙️ Config.</button>
+        <button class="sub-btn" onclick="showPanel('malla','academico')">🗺 Mi malla</button>
+        <button class="sub-btn" onclick="showPanel('carga','academico')">⏱ Carga</button>
+        <button class="sub-btn" onclick="showPanel('notas','academico')">📊 Notas</button>
+        <button class="sub-btn" onclick="showPanel('cancelar','academico')">⚠️ ¿Cancelar?</button>
+        <button class="sub-btn" onclick="showPanel('ia','academico')">✨ IA</button>
+      </div>
+
+      <div id="panel-config" class="panel active">
+        <div class="section-card">
+          <div class="section-card-header">⚙️ Perfil del estudiante</div>
+          <div class="section-card-body">
+            <div class="form-grid">
+              <div class="form-group"><label>Semestre actual</label>
+                <select id="sem-actual" onchange="renderMatsCfg()">
+                  <option>I</option><option>II</option><option>III</option><option>IV</option><option>V</option>
+                  <option>VI</option><option>VII</option><option>VIII</option><option>IX</option><option>X</option>
+                </select>
+              </div>
+              <div class="form-group"><label>Promedio acumulado</label><input type="number" id="p-prom" value="3.2" min="0" max="5" step="0.1"></div>
+              <div class="form-group"><label>Créditos aprobados</label><input type="number" id="p-cred" value="0" min="0" max="200"></div>
+              <div class="form-group"><label>Materias perdidas (historial)</label><input type="number" id="p-perd" value="0" min="0" max="20"></div>
+              <div class="form-group"><label>Horas trabajo/día</label><input type="number" id="h-trab" value="0" min="0" max="12"></div>
+              <div class="form-group"><label>Horas desplazamiento/día</label><input type="number" id="h-desp" value="1" min="0" max="6"></div>
+              <div class="form-group"><label>Horas sueño/día</label><input type="number" id="h-suen" value="7" min="4" max="10"></div>
+              <div class="form-group"><label>Otras responsabilidades/día</label><input type="number" id="h-otra" value="1" min="0" max="8"></div>
+            </div>
+          </div>
+        </div>
+        <div class="section-card">
+          <div class="section-card-header">📋 Materias matriculadas este semestre</div>
+          <div class="section-card-body">
+            <div class="chk-list" id="mats-cfg"></div>
+            <hr class="sep">
+            <button class="btn-primary" onclick="guardar()">✔ Guardar y calcular</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="panel-malla" class="panel">
+        <div class="section-card">
+          <div class="section-card-header">🗺 Mapa de mi carrera</div>
+          <div class="section-card-body">
+            <div class="leyenda">
+              <div class="ley-item"><div class="ley-dot" style="background:#81c784;border:1px solid #4caf50"></div>Aprobada</div>
+              <div class="ley-item"><div class="ley-dot" style="background:#90caf9;border:2px solid #1976d2"></div>En curso</div>
+              <div class="ley-item"><div class="ley-dot" style="background:#ffb74d;border:1px solid #ff6f00"></div>En riesgo</div>
+              <div class="ley-item"><div class="ley-dot" style="background:white;border:1px solid #e0e0e0"></div>Pendiente</div>
+              <div class="ley-item"><div class="ley-dot" style="background:#f5f5f5;border:1px solid #e0e0e0"></div>Bloqueada</div>
+            </div>
+            <div class="prog-bar-wrap">
+              <div class="prog-bar-label"><span>Avance en la carrera</span><span id="avance-txt">—</span></div>
+              <div class="prog-bar"><div class="prog-bar-fill" id="avance-bar" style="width:0%"></div></div>
+            </div>
+            <div class="malla-wrap"><div class="malla-grid" id="malla-grid"></div></div>
+            <div id="mat-detail"></div>
+          </div>
+        </div>
+        <div class="section-card">
+          <div class="section-card-header">✅ Marcar materias aprobadas</div>
+          <div class="section-card-body">
+            <p style="font-size:12px;color:var(--gris-suave);margin-bottom:10px">Selecciona las materias que ya aprobaste para ver tu avance real.</p>
+            <div id="aprobadas-list"></div>
+            <hr class="sep">
+            <button class="btn-primary" onclick="actualizarMalla()">🔄 Actualizar mapa</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="panel-carga" class="panel">
+        <div id="semaforo-box"></div>
+        <div class="metric-grid" id="metrics-box"></div>
+        <div class="section-card">
+          <div class="section-card-header">📋 Desglose por materia</div>
+          <div class="section-card-body"><div id="desglose-box"></div></div>
+        </div>
+        <div class="section-card">
+          <div class="section-card-header">⏱ Balance semanal (168 horas)</div>
+          <div class="section-card-body"><div id="balance-box"></div></div>
+        </div>
+      </div>
+
+      <div id="panel-notas" class="panel">
+        <div class="section-card">
+          <div class="section-card-header">📊 Notas parciales</div>
+          <div class="section-card-body">
+            <p style="font-size:12px;color:var(--gris-suave);margin-bottom:10px">Ingresa tus notas (0–5). Se guardan automáticamente.</p>
+            <div style="overflow-x:auto">
+              <table class="mat-table">
+                <thead><tr><th>Materia</th><th>Parcial 1</th><th>Parcial 2</th><th>Parcial 3</th><th></th></tr></thead>
+                <tbody id="tabla-notas"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div id="alertas-box"></div>
+      </div>
+
+      <div id="panel-cancelar" class="panel">
+        <div class="section-card">
+          <div class="section-card-header">⚠️ Analizador de cancelación</div>
+          <div class="section-card-body">
+            <div class="form-group" style="margin-bottom:12px"><label>Materia a cancelar</label>
+              <select id="sel-cancelar" onchange="analizarCancel()"><option value="">-- elige una materia --</option></select>
+            </div>
+          </div>
+        </div>
+        <div id="cancelar-result"></div>
+      </div>
+
+      <div id="panel-ia" class="panel">
+        <div class="section-card">
+          <div class="section-card-header">✨ Recomendaciones personalizadas con IA</div>
+          <div class="section-card-body">
+            <p style="font-size:12px;color:var(--gris-suave);margin-bottom:12px">Análisis basado en tu carga, notas y situación personal usando Claude.</p>
+            <button class="btn-primary" onclick="pedirIA()">✨ Generar recomendaciones ↗</button>
+            <div id="ia-resp"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SECCIÓN PREDICTIVA ══ -->
+    <div id="section-predictivo" style="display:none">
+      <div class="sub-nav">
+        <button class="sub-btn active" onclick="showPanel('pred-home','predictivo')">📊 Resumen</button>
+        <button class="sub-btn" onclick="showPanel('pred-riesgo','predictivo')">⚠️ Riesgo</button>
+        <button class="sub-btn" onclick="showPanel('pred-grad','predictivo')">📅 Graduación</button>
+        <button class="sub-btn" onclick="showPanel('pred-rec','predictivo')">💡 Próx. sem.</button>
+        <button class="sub-btn" onclick="showPanel('pred-deser','predictivo')">🛡 Deserción</button>
+      </div>
+
+      <div id="panel-pred-home" class="panel active">
+        <div class="section-card">
+          <div class="section-card-header">🧠 Panel predictivo</div>
+          <div class="section-card-body">
+            <p style="font-size:12px;color:var(--gris-suave);margin-bottom:12px">Modelos entrenados con 500 estudiantes sintéticos · Reemplazables con datos reales UdeA</p>
+            <div class="pred-cards" id="pred-home-cards"></div>
+          </div>
+        </div>
+        <div id="pred-alertas-box"></div>
+      </div>
+
+      <div id="panel-pred-riesgo" class="panel">
+        <div class="section-card">
+          <div class="section-card-header">⚠️ Riesgo de pérdida por materia</div>
+          <div class="section-card-body"><div id="pred-riesgo-res"></div></div>
+        </div>
+        <div class="section-card">
+          <div class="section-card-header">📊 Factores de influencia</div>
+          <div class="section-card-body"><div id="pred-factores"></div></div>
+        </div>
+      </div>
+
+      <div id="panel-pred-grad" class="panel">
+        <div class="section-card">
+          <div class="section-card-header">📅 Predictor de graduación</div>
+          <div class="section-card-body">
+            <div class="metric-grid" id="grad-metrics"></div>
+            <div id="grad-timeline"></div>
+          </div>
+        </div>
+        <div class="section-card">
+          <div class="section-card-header">📈 Escenarios</div>
+          <div class="section-card-body"><div id="grad-escenarios"></div></div>
+        </div>
+      </div>
+
+      <div id="panel-pred-rec" class="panel">
+        <div class="section-card">
+          <div class="section-card-header">💡 Recomendador — próximo semestre</div>
+          <div class="section-card-body"><div id="pred-rec-res"></div></div>
+        </div>
+      </div>
+
+      <div id="panel-pred-deser" class="panel">
+        <div class="section-card">
+          <div class="section-card-header">🛡 Riesgo de deserción</div>
+          <div class="section-card-body"><div id="pred-deser-res"></div></div>
+        </div>
+        <div class="section-card">
+          <div class="section-card-header">📊 Factores individuales</div>
+          <div class="section-card-body"><div id="pred-deser-factores"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══ MALLAS CURRICULARES ══
+const PROGRAMAS = {
+  'ind-pre':{nombre:'Ing. Industrial',modalidad:'Presencial',creditos:160,materias:[
+    {c:'2555101',n:'Álgebra y trigonometría',cr:3,s:1,pre:[],co:[]},{c:'2555131',n:'Cálculo diferencial',cr:3,s:1,pre:[],co:[]},{c:'2555121',n:'Geometría vectorial y analítica',cr:3,s:1,pre:[],co:[]},{c:'2536101',n:'Descubriendo la física',cr:3,s:1,pre:[],co:[]},{c:'2502911',n:'Introducción a la ing. industrial',cr:2,s:1,pre:[],co:[]},{c:'2539101',n:'Lectoescritura',cr:3,s:1,pre:[],co:[]},{c:'2538101',n:'Inglés I',cr:1,s:1,pre:[],co:[],ing:true},{c:'2537101',n:'Vivamos la universidad',cr:1,s:1,pre:[],co:[]},
+    {c:'2555231',n:'Cálculo integral',cr:3,s:2,pre:['2555131'],co:[]},{c:'2555221',n:'Álgebra lineal',cr:3,s:2,pre:['2555121'],co:[]},{c:'2502921',n:'Gestión de las organizaciones',cr:3,s:2,pre:[],co:[]},{c:'2502922',n:'Habilidades gerenciales',cr:3,s:2,pre:[],co:[]},{c:'2538201',n:'Inglés II',cr:1,s:2,pre:['2538101'],co:[],ing:true},
+    {c:'2536201',n:'Física mecánica',cr:3,s:3,pre:['2536101','2555131'],co:[]},{c:'2502931',n:'Gestión contable',cr:3,s:3,pre:['2502921'],co:[]},{c:'2502932',n:'Teoría general de sistemas',cr:3,s:3,pre:[],co:[]},{c:'2502934',n:'Probabilidad e inferencia estadística',cr:3,s:3,pre:['2555231'],co:[]},{c:'2502935',n:'Algoritmia y programación',cr:3,s:3,pre:[],co:[]},{c:'2502933',n:'Gestión de métodos y tiempos',cr:4,s:3,pre:['2502921'],co:[]},{c:'2538301',n:'Inglés III',cr:1,s:3,pre:['2538201'],co:[],ing:true},
+    {c:'2502941',n:'Ingeniería económica',cr:3,s:4,pre:['2502931'],co:[]},{c:'2502942',n:'Dinámica de sistemas',cr:3,s:4,pre:['2502932'],co:['2502934']},{c:'2502943',n:'Gestión por procesos',cr:3,s:4,pre:['2502933'],co:[]},{c:'2502944',n:'Diseño de experimentos',cr:3,s:4,pre:['2502934'],co:[]},{c:'2502945',n:'Optimización',cr:3,s:4,pre:['2555221'],co:[]},{c:'2538401',n:'Inglés IV',cr:1,s:4,pre:['2538301'],co:[],ing:true},
+    {c:'2502951',n:'Gestión financiera',cr:3,s:5,pre:['2502941'],co:[]},{c:'2502952',n:'Gestión tecnológica',cr:3,s:5,pre:['2502942'],co:[]},{c:'2502953',n:'Normalización y control de calidad',cr:3,s:5,pre:['2502943'],co:[]},{c:'2502954',n:'Muestreo y series de tiempo',cr:3,s:5,pre:['2502944'],co:[]},{c:'2502955',n:'Procesos estocásticos',cr:3,s:5,pre:['2502945'],co:[]},{c:'2538501',n:'Inglés V',cr:1,s:5,pre:['2538401'],co:[],ing:true},
+    {c:'2517351',n:'Formación ciudadana',cr:0,s:6,pre:[],co:[]},{c:'2502961',n:'Diseño de sistemas productivos',cr:3,s:6,pre:['2502953'],co:[]},{c:'2502962',n:'Simulación discreta',cr:3,s:6,pre:['2502955'],co:[]},{c:'2502963',n:'Formulación de proyectos',cr:3,s:6,pre:['2502944'],co:[]},{c:'2502964',n:'Emprendimiento',cr:2,s:6,pre:['2502952'],co:[]},{c:'2538601',n:'Inglés VI',cr:1,s:6,pre:['2538501'],co:[],ing:true},
+    {c:'2502971',n:'Legislación',cr:3,s:7,pre:['2517351'],co:[]},{c:'2502972',n:'Administración de la producción',cr:3,s:7,pre:['2502961'],co:[]},
+    {c:'2502981',n:'Formulación y evaluación de proyectos',cr:3,s:8,pre:['2502951'],co:[]},{c:'2502982',n:'Gestión de la cadena de abastecimiento',cr:3,s:8,pre:['2502972'],co:[]},
+    {c:'2502991',n:'Gestión de proyectos',cr:3,s:9,pre:['2502981'],co:[]},{c:'2502992',n:'Mejoramiento continuo',cr:3,s:9,pre:[],co:[]},
+    {c:'9013p',n:'Práctica profesional',cr:12,s:10,pre:[],co:[]}
+  ]},
+  'ind-vir':{nombre:'Ing. Industrial',modalidad:'Virtual',creditos:160,materias:[
+    {c:'2559101',n:'Álgebra y trigonometría',cr:3,s:1,pre:[],co:[]},{c:'2559131',n:'Cálculo diferencial',cr:3,s:1,pre:[],co:[]},{c:'2559121',n:'Geometría vectorial y analítica',cr:3,s:1,pre:[],co:[]},{c:'2567101',n:'Descubriendo la física',cr:3,s:1,pre:[],co:[]},{c:'2553912',n:'Introducción a la ing. industrial',cr:1,s:1,pre:[],co:[]},{c:'2564101',n:'Lectoescritura',cr:3,s:1,pre:[],co:[]},{c:'2540101',n:'Inglés I',cr:1,s:1,pre:[],co:[],ing:true},{c:'2565101',n:'Vivamos la universidad',cr:1,s:1,pre:[],co:[]},
+    {c:'2559231',n:'Cálculo integral',cr:3,s:2,pre:['2559131'],co:[]},{c:'2559221',n:'Álgebra lineal',cr:3,s:2,pre:['2559121'],co:[]},{c:'2553921',n:'Gestión de las organizaciones',cr:3,s:2,pre:[],co:[]},{c:'2553922',n:'Habilidades gerenciales',cr:3,s:2,pre:[],co:[]},{c:'2540201',n:'Inglés II',cr:1,s:2,pre:['2540101'],co:[],ing:true},
+    {c:'2553931',n:'Gestión contable',cr:3,s:3,pre:['2553921'],co:[]},{c:'2553932',n:'Teoría general de sistemas',cr:3,s:3,pre:[],co:[]},{c:'2553934',n:'Probabilidad e inferencia estadística',cr:3,s:3,pre:['2559231'],co:[]},{c:'2553935',n:'Algoritmia y programación',cr:3,s:3,pre:[],co:[]},{c:'2567201',n:'Física mecánica',cr:3,s:3,pre:['2567101','2559131'],co:[]},{c:'2553933',n:'Gestión de métodos y tiempos',cr:4,s:3,pre:['2553921'],co:[]},{c:'2540301',n:'Inglés III',cr:1,s:3,pre:['2540201'],co:[],ing:true},
+    {c:'2553941',n:'Ingeniería económica',cr:3,s:4,pre:['2553931'],co:[]},{c:'2553942',n:'Dinámica de sistemas',cr:3,s:4,pre:['2553932'],co:['2553934']},{c:'2553943',n:'Gestión por procesos',cr:3,s:4,pre:['2553933'],co:[]},{c:'2553944',n:'Diseño de experimentos',cr:3,s:4,pre:['2553934'],co:[]},{c:'2553945',n:'Optimización',cr:3,s:4,pre:['2559221'],co:[]},{c:'2540401',n:'Inglés IV',cr:1,s:4,pre:['2540301'],co:[],ing:true},
+    {c:'2553951',n:'Gestión financiera',cr:3,s:5,pre:['2553941'],co:[]},{c:'2553952',n:'Gestión tecnológica',cr:3,s:5,pre:['2553942'],co:[]},{c:'2553953',n:'Normalización y control de calidad',cr:3,s:5,pre:['2553943'],co:[]},{c:'2553954',n:'Muestreo y series de tiempo',cr:3,s:5,pre:['2553944'],co:[]},{c:'2553955',n:'Procesos estocásticos',cr:3,s:5,pre:['2553945'],co:[]},{c:'2540501',n:'Inglés V',cr:1,s:5,pre:['2540401'],co:[],ing:true},
+    {c:'2553961',n:'Diseño de sistemas productivos',cr:3,s:6,pre:['2553953'],co:[]},{c:'2553962',n:'Simulación discreta',cr:3,s:6,pre:['2553955'],co:[]},{c:'2553963',n:'Formulación de proyectos',cr:3,s:6,pre:['2553944'],co:[]},{c:'2553964',n:'Emprendimiento',cr:2,s:6,pre:['2553952'],co:[]},{c:'2540601',n:'Inglés VI',cr:1,s:6,pre:['2540501'],co:[],ing:true},
+    {c:'2553971',n:'Legislación',cr:3,s:7,pre:[],co:[]},{c:'2553972',n:'Administración de la producción',cr:3,s:7,pre:['2553961'],co:[]},
+    {c:'2553981',n:'Formulación y evaluación de proyectos',cr:3,s:8,pre:['2553951'],co:[]},{c:'2553982',n:'Gestión de la cadena de abastecimiento',cr:3,s:8,pre:['2553972'],co:[]},
+    {c:'2553991',n:'Gestión de proyectos',cr:3,s:9,pre:['2553981'],co:[]},{c:'2553992',n:'Mejoramiento continuo',cr:3,s:9,pre:[],co:[]},
+    {c:'9013v',n:'Práctica profesional',cr:12,s:10,pre:[],co:[]}
+  ]},
+  'civ-pre':{nombre:'Ing. Civil',modalidad:'Presencial',creditos:160,materias:[
+    {c:'2550131',n:'Cálculo diferencial',cr:3,s:1,pre:[],co:[]},{c:'2550101',n:'Álgebra y trigonometría',cr:3,s:1,pre:[],co:[]},{c:'2536101c',n:'Descubriendo la física',cr:3,s:1,pre:[],co:[]},{c:'2550121',n:'Geometría vectorial y analítica',cr:3,s:1,pre:[],co:[]},{c:'2550111',n:'Geometría euclidiana',cr:3,s:1,pre:[],co:[]},{c:'2501127',n:'Introducción a la ing. civil',cr:1,s:1,pre:[],co:[]},{c:'2538101c',n:'Inglés I',cr:1,s:1,pre:[],co:[],ing:true},
+    {c:'2550231',n:'Cálculo integral',cr:3,s:2,pre:['2550131'],co:[]},{c:'2550221',n:'Álgebra lineal',cr:3,s:2,pre:['2550121'],co:[]},{c:'2536201c',n:'Física mecánica',cr:3,s:2,pre:['2536101c','2550131'],co:[]},{c:'2543171',n:'Expresión gráfica',cr:2,s:2,pre:[],co:[]},{c:'2538901',n:'Lectoescritura',cr:3,s:2,pre:[],co:[]},{c:'2538201c',n:'Inglés II',cr:1,s:2,pre:['2538101c'],co:[],ing:true},
+    {c:'2550331',n:'Cálculo vectorial',cr:3,s:3,pre:['2550231'],co:[]},{c:'2536302c',n:'Física de ondas',cr:3,s:3,pre:['2536201c'],co:[]},{c:'2550711',n:'Ecuaciones diferenciales',cr:3,s:3,pre:['2550231','2550221'],co:[]},{c:'2550710',n:'Topografía',cr:3,s:3,pre:[],co:[]},{c:'2550141',n:'Estática',cr:3,s:3,pre:['2536201c'],co:[]},{c:'2538301c',n:'Inglés III',cr:1,s:3,pre:['2538201c'],co:[],ing:true},
+    {c:'2550711m',n:'Mecánica del medio continuo',cr:4,s:4,pre:['2550331'],co:[]},{c:'2550742',n:'Métodos numéricos',cr:3,s:4,pre:['2550331'],co:[]},{c:'2550745',n:'Estadística',cr:3,s:4,pre:['2550231'],co:[]},{c:'2538401c',n:'Inglés IV',cr:1,s:4,pre:['2538301c'],co:[],ing:true},
+    {c:'2550310',n:'Resistencia de materiales',cr:4,s:5,pre:['2550711m'],co:[]},{c:'2550221h',n:'Hidrología',cr:3,s:5,pre:['2550745'],co:[]},{c:'2550711f',n:'Mecánica de fluidos',cr:3,s:5,pre:['2550711m'],co:[]},{c:'2538501c',n:'Inglés V',cr:1,s:5,pre:['2538401c'],co:[],ing:true},
+    {c:'2551334',n:'Análisis estructural I',cr:4,s:6,pre:['2550310'],co:[]},{c:'2550313',n:'Mecánica de suelos',cr:4,s:6,pre:['2550310'],co:[]},{c:'2550711h',n:'Hidráulica de canales',cr:3,s:6,pre:['2550711f'],co:[]},{c:'2551022',n:'Diseño geométrico de vías',cr:4,s:6,pre:['2550710'],co:[]},{c:'2538601c',n:'Inglés VI',cr:1,s:6,pre:['2538501c'],co:[],ing:true},
+    {c:'2551444',n:'Estructuras de hormigón',cr:4,s:7,pre:['2551334'],co:[]},{c:'2551431',n:'Materiales de construcción',cr:3,s:7,pre:['2550313'],co:[]},{c:'2551327',n:'Cimentaciones',cr:3,s:7,pre:['2550313'],co:[]},{c:'2551090',n:'Ing. tránsito y transporte',cr:3,s:7,pre:['2551022'],co:[]},
+    {c:'2551523',n:'Presupuesto y prog. obras',cr:3,s:8,pre:['2551444'],co:[]},{c:'2551999',n:'Pavimentos',cr:3,s:8,pre:['2551431'],co:[]},{c:'2551507',n:'Formulación y evaluación proyectos',cr:3,s:8,pre:[],co:[]},
+    {c:'2557600',n:'Seminario integrador',cr:2,s:9,pre:[],co:[]},{c:'9013c',n:'Práctica profesional',cr:12,s:10,pre:[],co:[]}
+  ]},
+  'san-pre':{nombre:'Ing. Sanitaria',modalidad:'Presencial',creditos:160,materias:[
+    {c:'2555131s',n:'Cálculo diferencial',cr:3,s:1,pre:[],co:[]},{c:'2555101s',n:'Álgebra y trigonometría',cr:3,s:1,pre:[],co:[]},{c:'2558121',n:'Geometría vectorial y analítica',cr:3,s:1,pre:[],co:[]},{c:'2556101',n:'Descubriendo la física',cr:3,s:1,pre:[],co:[]},{c:'2558111',n:'Geometría euclidiana',cr:3,s:1,pre:[],co:[]},{c:'2537101s',n:'Vivamos la universidad',cr:1,s:1,pre:[],co:[]},{c:'2501651',n:'Introducción a la ing. sanitaria',cr:1,s:1,pre:[],co:[]},{c:'2538101s',n:'Inglés I',cr:1,s:1,pre:[],co:[],ing:true},
+    {c:'2555231s',n:'Cálculo integral',cr:3,s:2,pre:['2555131s'],co:[]},{c:'2558201',n:'Física mecánica',cr:3,s:2,pre:['2556101'],co:[]},{c:'2539101s',n:'Lectoescritura',cr:3,s:2,pre:[],co:[]},{c:'2538201s',n:'Inglés II',cr:1,s:2,pre:['2538101s'],co:[],ing:true},
+    {c:'2555331s',n:'Cálculo vectorial',cr:3,s:3,pre:['2555231s'],co:[]},{c:'2857321',n:'Ecuaciones diferenciales',cr:3,s:3,pre:['2555231s'],co:[]},{c:'2557102',n:'Topografía',cr:3,s:3,pre:[],co:[]},{c:'2556321',n:'Física térmica',cr:3,s:3,pre:['2558201'],co:[]},{c:'2505135',n:'Química general',cr:4,s:3,pre:[],co:[]},{c:'2538301s',n:'Inglés III',cr:1,s:3,pre:['2538201s'],co:[],ing:true},
+    {c:'2557422',n:'Métodos numéricos',cr:3,s:4,pre:['2555331s'],co:[]},{c:'2557250',n:'Química ambiental',cr:3,s:4,pre:['2505135'],co:[]},{c:'2557111',n:'Mecánica del medio continuo',cr:3,s:4,pre:['2555331s'],co:[]},{c:'2557345',n:'Estadística',cr:3,s:4,pre:['2555231s'],co:[]},{c:'2538401s',n:'Inglés IV',cr:1,s:4,pre:['2538301s'],co:[],ing:true},
+    {c:'2557221',n:'Hidrología',cr:3,s:5,pre:['2557345'],co:[]},{c:'2557211',n:'Mecánica de fluidos',cr:3,s:5,pre:['2557111'],co:[]},{c:'2557290',n:'Química y calidad del agua',cr:3,s:5,pre:['2557250'],co:[]},{c:'2538501s',n:'Inglés V',cr:1,s:5,pre:['2538401s'],co:[],ing:true},
+    {c:'2557311',n:'Hidráulica de canales',cr:3,s:6,pre:['2557211'],co:[]},{c:'2501416',n:'Mecánica de suelos',cr:3,s:6,pre:['2557111'],co:[]},{c:'2501711',n:'Hidrobiología sanitaria',cr:3,s:6,pre:['2557290'],co:[]},{c:'2501721',n:'Microbiología sanitaria',cr:3,s:6,pre:['2505135'],co:[]},{c:'2538601s',n:'Inglés VI',cr:1,s:6,pre:['2538501s'],co:[],ing:true},
+    {c:'2501731',n:'Sistemas de abastecimiento agua',cr:3,s:7,pre:['2557311'],co:[]},{c:'2501741',n:'Sistemas de alcantarillado',cr:3,s:7,pre:['2557311'],co:[]},{c:'2501751',n:'Procesos físico-químicos',cr:4,s:7,pre:['2557290'],co:[]},{c:'2501761',n:'Procesos biológicos',cr:4,s:7,pre:['2557290'],co:[]},
+    {c:'2501771',n:'Sistemas de potabilización',cr:3,s:8,pre:['2501731'],co:[]},{c:'2501781',n:'Manejo de residuos sólidos',cr:3,s:8,pre:['2501751'],co:[]},{c:'2501791',n:'Tratamiento aguas residuales',cr:3,s:8,pre:['2501761'],co:[]},
+    {c:'2501843',n:'Presupuesto obras sanitarias',cr:3,s:9,pre:['2501771'],co:[]},{c:'2557630',n:'Seminario integrador',cr:2,s:9,pre:[],co:[]},{c:'9013s',n:'Práctica profesional',cr:12,s:10,pre:[],co:[]}
+  ]},
+  'amb-vir':{nombre:'Ing. Ambiental',modalidad:'Virtual',creditos:182,materias:[
+    {c:'2559110',n:'Geometría euclidiana',cr:4,s:1,pre:[],co:[]},{c:'2559100',n:'Álgebra y trigonometría',cr:4,s:1,pre:[],co:[]},{c:'2559130',n:'Cálculo diferencial',cr:4,s:1,pre:['2559100'],co:[]},{c:'2559120',n:'Geometría vectorial y analítica',cr:4,s:1,pre:[],co:[]},{c:'2567100',n:'Descubriendo la física',cr:4,s:1,pre:[],co:[]},{c:'2580100',n:'Introducción a la ing. ambiental',cr:2,s:1,pre:[],co:[]},{c:'2540100',n:'Inglés I',cr:0,s:1,pre:[],co:[],ing:true},
+    {c:'2559230',n:'Cálculo integral',cr:4,s:2,pre:['2559130','2559100'],co:[]},{c:'2559220',n:'Álgebra lineal',cr:4,s:2,pre:['2559120','2559100'],co:[]},{c:'2567200',n:'Física mecánica',cr:4,s:2,pre:['2567100','2559130'],co:[]},{c:'2564100',n:'Lectoescritura',cr:4,s:2,pre:[],co:[]},{c:'2540200',n:'Inglés II',cr:0,s:2,pre:['2540100'],co:[],ing:true},
+    {c:'2559330',n:'Cálculo vectorial',cr:4,s:3,pre:['2559230'],co:[]},{c:'2580300',n:'Estadística',cr:4,s:3,pre:['2559230'],co:[]},{c:'2580302',n:'Ecuaciones diferenciales',cr:4,s:3,pre:['2559230','2559220'],co:[]},{c:'2567320',n:'Física térmica',cr:4,s:3,pre:['2567200'],co:[]},{c:'2580304',n:'Algoritmos y programación',cr:4,s:3,pre:['2559220'],co:[]},{c:'2540300',n:'Inglés III',cr:0,s:3,pre:['2540200'],co:[],ing:true},
+    {c:'2580400',n:'Mecánica del medio continuo',cr:4,s:4,pre:['2559330','2567320'],co:[]},{c:'2580401',n:'Geología física y geomorfología',cr:4,s:4,pre:[],co:[]},{c:'2580403',n:'Biología',cr:4,s:4,pre:['2580300'],co:[]},{c:'2580404',n:'Química general',cr:5,s:4,pre:['2580100'],co:[]},{c:'2540400',n:'Inglés IV',cr:0,s:4,pre:['2540300'],co:[],ing:true},
+    {c:'2580500',n:'Geomática',cr:3,s:5,pre:['2580300','2580401'],co:[]},{c:'2580501',n:'Química ambiental',cr:4,s:5,pre:['2580404'],co:[]},{c:'2580502',n:'Hidrología',cr:4,s:5,pre:['2580300'],co:[]},{c:'2580503',n:'Mecánica de fluidos',cr:4,s:5,pre:['2580400'],co:[]},{c:'2580504',n:'Ecología',cr:4,s:5,pre:['2580403'],co:[]},{c:'2540500',n:'Inglés V',cr:0,s:5,pre:['2540400'],co:[],ing:true},
+    {c:'2580600',n:'Recursos naturales',cr:4,s:6,pre:['2580401','2580504'],co:[]},{c:'2580601',n:'Sociedad y ambiente',cr:4,s:6,pre:['2580504'],co:[]},{c:'2580602',n:'Ingeniería económica',cr:4,s:6,pre:['2580300'],co:[]},{c:'2580603',n:'Calidad del agua',cr:4,s:6,pre:['2580501'],co:[]},{c:'2580604',n:'Dinámica de sistemas ambientales',cr:4,s:6,pre:[],co:[]},{c:'2540600',n:'Inglés VI',cr:0,s:6,pre:[],co:[],ing:true},
+    {c:'2580700',n:'Modelación ambiental',cr:4,s:7,pre:['2580604','2580502','2580504'],co:[]},{c:'2580701',n:'Legislación ambiental',cr:4,s:7,pre:['2580600','2580601'],co:[]},{c:'2580702',n:'Ciencias del suelo',cr:4,s:7,pre:['2580501','2580401','2580504'],co:[]},{c:'2580703',n:'Ciencias de la atmósfera',cr:4,s:7,pre:['2580502','2580503'],co:[]},{c:'2580704',n:'Economía ambiental',cr:4,s:7,pre:['2580602','2580601'],co:[]},
+    {c:'2580800',n:'Planificación y gestión ambiental',cr:4,s:8,pre:['2580701','2580602'],co:[]},{c:'2580801',n:'Sistemas de control ambiental',cr:4,s:8,pre:['2580603','2580702','2580703'],co:[]}
+  ]},
+  'tel-pre':{nombre:'Ing. Telecom.',modalidad:'Presencial',creditos:175,materias:[
+    {c:'2536101t',n:'Descubriendo la física',cr:3,s:1,pre:[],co:[]},{c:'2555131t',n:'Cálculo diferencial',cr:3,s:1,pre:[],co:[]},{c:'2555101t',n:'Álgebra y trigonometría',cr:3,s:1,pre:[],co:[]},{c:'2555121t',n:'Geom. vectorial y analítica',cr:3,s:1,pre:[],co:[]},{c:'2598511',n:'Informática I',cr:4,s:1,pre:[],co:[]},{c:'2537101t',n:'Vivamos la universidad',cr:1,s:1,pre:[],co:[]},{c:'2538101t',n:'Inglés I',cr:1,s:1,pre:[],co:[],ing:true},
+    {c:'2536201t',n:'Física mecánica',cr:3,s:2,pre:['2536101t'],co:[]},{c:'2555231t',n:'Cálculo integral',cr:3,s:2,pre:['2555131t'],co:[]},{c:'2555221t',n:'Álgebra lineal',cr:3,s:2,pre:['2555121t'],co:[]},{c:'2598521',n:'Informática II',cr:4,s:2,pre:['2598511'],co:[]},{c:'2539101t',n:'Lectoescritura',cr:3,s:2,pre:[],co:[]},{c:'2538201t',n:'Inglés II',cr:1,s:2,pre:['2538101t'],co:[],ing:true},
+    {c:'2536302t',n:'Física de ondas',cr:3,s:3,pre:['2536201t'],co:[]},{c:'2555331t',n:'Cálculo vectorial',cr:3,s:3,pre:['2555231t'],co:[]},{c:'2598531',n:'Ecuaciones diferenciales',cr:3,s:3,pre:['2555231t'],co:[]},{c:'2598532',n:'Probabilidad y estadística',cr:3,s:3,pre:['2555231t'],co:[]},{c:'2599431',n:'Circuitos eléctricos I',cr:4,s:3,pre:['2555231t'],co:[]},{c:'2538301t',n:'Inglés III',cr:1,s:3,pre:['2538201t'],co:[],ing:true},
+    {c:'2536311',n:'Física de campos',cr:3,s:4,pre:['2536302t','2555331t'],co:[]},{c:'2598541',n:'Matemáticas especiales',cr:3,s:4,pre:['2555331t'],co:[]},{c:'2598542',n:'Métodos numéricos',cr:3,s:4,pre:['2598531'],co:[]},{c:'2599441',n:'Circuitos eléctricos II',cr:4,s:4,pre:['2599431'],co:[]},{c:'2538401t',n:'Inglés IV',cr:1,s:4,pre:['2538301t'],co:[],ing:true},
+    {c:'2598554',n:'Electromagnetismo',cr:3,s:5,pre:['2536311','2598541'],co:[]},{c:'2598551',n:'Física del estado sólido',cr:3,s:5,pre:['2536311'],co:[]},{c:'2599451',n:'Fundam. electrónica análoga',cr:4,s:5,pre:['2599441'],co:[]},{c:'2599452',n:'Fundam. electrónica digital',cr:4,s:5,pre:['2599441'],co:[]},{c:'2538501t',n:'Inglés V',cr:1,s:5,pre:['2538401t'],co:[],ing:true},
+    {c:'2599461',n:'Tratamiento de señales I',cr:4,s:6,pre:['2598554'],co:[]},{c:'2599465',n:'Teoría de la información',cr:3,s:6,pre:['2598532'],co:[]},{c:'2599463',n:'Trans. medios confinados',cr:3,s:6,pre:['2598554'],co:[]},{c:'2599462',n:'Redes de computadores I',cr:3,s:6,pre:['2599452'],co:[]},{c:'2538601t',n:'Inglés VI',cr:1,s:6,pre:['2538501t'],co:[],ing:true},
+    {c:'2599471',n:'Tratamiento de señales II',cr:4,s:7,pre:['2599461'],co:[]},{c:'2599474',n:'Técnicas de optimización',cr:3,s:7,pre:['2598542'],co:[]},{c:'2599473',n:'Trans. medios confinados II',cr:3,s:7,pre:['2599463'],co:[]},{c:'2599472',n:'Redes de computadores II',cr:3,s:7,pre:['2599462'],co:[]},
+    {c:'2599481',n:'Tratamiento de señales III',cr:4,s:8,pre:['2599471'],co:[]},{c:'2599483',n:'Radiotransmisión',cr:4,s:8,pre:['2599473'],co:[]},{c:'2599482',n:'Gestión de telecomunicaciones I',cr:3,s:8,pre:['2599474'],co:[]},
+    {c:'2599493',n:'Comunicaciones inalámbricas',cr:3,s:9,pre:['2599481'],co:[]},{c:'2599491',n:'Gestión de telecomunicaciones II',cr:3,s:9,pre:['2599482'],co:[]},
+    {c:'9013t',n:'Práctica académica',cr:12,s:10,pre:[],co:[]}
+  ]}
+};
+
+// ══ MODELO PREDICTIVO ══
+const sigmoid = z => 1/(1+Math.exp(-z));
+const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
+function normRnd(m,s){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return m+s*Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function genDatos(n=500){const d=[];for(let i=0;i<n;i++){const t=clamp(normRnd(3,2.5),0,10),ds=clamp(normRnd(1.5,1),0,5),m=clamp(Math.round(normRnd(5,1)),2,8),nb=clamp(normRnd(3.3,0.7),0,5),pa=clamp(normRnd(3.2,0.6),0,5),p=Math.max(0,Math.round(normRnd(1,1.2))),ca=Math.max(0,Math.round(normRnd(0.5,0.8)));const fr=t*0.15+ds*0.08+(5-nb)*0.4+p*0.12+ca*0.06+(m-5)*0.05;d.push({trabajo:t,desplaz:ds,materias:m,notaBase:nb,promAcum:pa,perdidas:p,canceladas:ca,pP:clamp(sigmoid(fr-2.5),0.02,0.98),pD:clamp(sigmoid(fr*0.8+p*0.2-3),0.02,0.95)});}return d;}
+const DATOS=genDatos(500);
+function nStats(datos,feats){const s={};feats.forEach(f=>{const v=datos.map(d=>d[f]);const m=v.reduce((a,b)=>a+b,0)/v.length;s[f]={m,s:Math.sqrt(v.reduce((a,x)=>a+(x-m)**2,0)/v.length)||1};});return s;}
+function trainLR(datos,tFn,feats,stats,lr=0.05,ep=300){let w=new Array(feats.length).fill(0),b=0;for(let e=0;e<ep;e++){const dw=new Array(feats.length).fill(0);let db=0;datos.forEach(d=>{const x=feats.map(f=>(d[f]-stats[f].m)/stats[f].s);const y=tFn(d);const pr=sigmoid(x.reduce((s,xi,i)=>s+w[i]*xi,b));const er=pr-y;x.forEach((xi,i)=>dw[i]+=er*xi);db+=er;});w=w.map((wi,i)=>wi-lr*dw[i]/datos.length);b=b-lr*db/datos.length;}return{w,b};}
+const FR=['trabajo','desplaz','materias','notaBase','perdidas','canceladas'];
+const FD=['trabajo','desplaz','materias','promAcum','perdidas','canceladas'];
+const SR=nStats(DATOS,FR),SD=nStats(DATOS,FD);
+const MR=trainLR(DATOS,d=>d.pP>0.5?1:0,FR,SR);
+const MD=trainLR(DATOS,d=>d.pD>0.4?1:0,FD,SD);
+function predR(p){const x=FR.map(f=>(p[f]-SR[f].m)/SR[f].s);return clamp(sigmoid(x.reduce((s,xi,i)=>s+MR.w[i]*xi,MR.b)),0.03,0.97);}
+function predD(p){const x=FD.map(f=>(p[f]-SD[f].m)/SD[f].s);return clamp(sigmoid(x.reduce((s,xi,i)=>s+MD.w[i]*xi,MD.b)),0.02,0.95);}
+function predG(p){const e=(p.perdidas*0.6)+(p.canceladas||0)*0.3+(p.trabajo>6?1.2:p.trabajo>3?0.5:0)+(p.promAcum<2.8?1.5:p.promAcum<3.2?0.5:0);return Math.max(1,Math.round(10-p.semestre+e));}
+function colorR(p){if(p>=0.65)return{c:'#c62828',cls:'badge-red',l:'Alto'};if(p>=0.35)return{c:'#ff6f00',cls:'badge-orange',l:'Medio'};return{c:'#2e7d32',cls:'badge-green',l:'Bajo'};}
+
+// ══ ESTADO ══
+const SK='udea-planeador-v1';
+let st={progId:null,semestre:'I',selMats:[],notas:{},aprobadas:new Set(),hT:0,hD:1,hS:7,hO:1,promAcum:3.2,creditos:0,perdidas:0};
+let saveTimer=null;
+
+// ══ STORAGE (localStorage para archivo HTML local) ══
+function guardarSt(){setSave('saving','Guardando...');try{localStorage.setItem(SK,JSON.stringify({...st,aprobadas:[...st.aprobadas],selMatCodes:st.selMats.map(m=>m.c),savedAt:new Date().toISOString()}));setSave('ok','Guardado ✓ '+new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}));}catch(e){setSave('error','Error al guardar');}}
+function cargarSt(){try{const r=localStorage.getItem(SK);if(!r)return false;const d=JSON.parse(r);if(!d.progId||!PROGRAMAS[d.progId])return false;Object.assign(st,d);st.aprobadas=new Set(d.aprobadas||[]);const malla=PROGRAMAS[st.progId].materias;const sn=['I','II','III','IV','V','VI','VII','VIII','IX','X'].indexOf(st.semestre)+1;const ms=malla.filter(m=>m.s===sn);st.selMats=(d.selMatCodes||[]).map(c=>ms.find(m=>m.c===c)).filter(Boolean);if(!st.selMats.length)st.selMats=ms;return d;}catch(e){return false;}}
+function setSave(t,m){const dot=document.getElementById('save-dot');dot.className='save-dot'+(t==='saving'?' saving':'');document.getElementById('save-msg').textContent=m;}
+function autoSave(){clearTimeout(saveTimer);saveTimer=setTimeout(guardarSt,800);}
+
+// ══ HELPERS ══
+function hC(m){if(m.ing)return 4;if(m.cr>=4)return 7;if(m.cr===3)return 4;if(m.cr===2)return 2;return 2;}
+function getSem(){return['I','II','III','IV','V','VI','VII','VIII','IX','X'].indexOf(document.getElementById('sem-actual').value)+1;}
+function getMalla(){return PROGRAMAS[st.progId]?.materias||[];}
+function getPerfil(){return{semestre:getSem(),materias:st.selMats.length,promAcum:st.promAcum,trabajo:st.hT,desplaz:st.hD,perdidas:st.perdidas,canceladas:0,notas:st.selMats.map(m=>{const n=st.notas[m.c]||{};const v=[n.p1,n.p2,n.p3].filter(x=>x!=='').map(Number);return v.length?v.reduce((a,b)=>a+b,0)/v.length:st.promAcum;})};}
+
+// ══ PROG GRID ══
+function renderProgGrid(){document.getElementById('prog-grid').innerHTML=Object.entries(PROGRAMAS).map(([id,p])=>`<div class="prog-card${id===st.progId?' active':''}" id="pc-${id}" onclick="selProg('${id}')">${id===st.progId?`<span class="saved">guardado</span>`:''}<div class="pn">${p.nombre}</div><div class="pm">${p.modalidad==='Virtual'?'💻':'🏫'} ${p.modalidad} · ${p.creditos}cr</div></div>`).join('');}
+
+function selProg(id){
+  if(st.progId&&st.progId!==id){if(!confirm('Cambiar de programa borrará tu progreso. ¿Continuar?'))return;st={progId:id,semestre:'I',selMats:[],notas:{},aprobadas:new Set(),hT:0,hD:1,hS:7,hO:1,promAcum:3.2,creditos:0,perdidas:0};}
+  else st.progId=id;
+  document.querySelectorAll('.prog-card').forEach(c=>c.classList.remove('active'));
+  document.getElementById('pc-'+id)?.classList.add('active');
+  document.getElementById('main-app').style.display='block';
+  renderMatsCfg();showPanel('config','academico');showSection('academico');autoSave();
+}
+
+function renderMatsCfg(){
+  if(!st.progId)return;
+  const sem=getSem(),mats=getMalla().filter(m=>m.s===sem);
+  document.getElementById('mats-cfg').innerHTML=mats.length?mats.map(m=>`<label class="chk-item"><input type="checkbox" id="chk-${m.c}" ${st.selMats.find(s=>s.c===m.c)?'checked':''}><span>${m.n}</span><span class="badge badge-blue">${m.cr}cr</span></label>`).join(''):`<p style="font-size:12px;color:var(--gris-suave)">Sin materias en este semestre.</p>`;}
+
+function guardar(){
+  st.semestre=document.getElementById('sem-actual').value;
+  st.hT=+document.getElementById('h-trab').value;
+  st.hD=+document.getElementById('h-desp').value;
+  st.hS=+document.getElementById('h-suen').value;
+  st.hO=+document.getElementById('h-otra').value;
+  st.promAcum=+document.getElementById('p-prom').value;
+  st.creditos=+document.getElementById('p-cred').value;
+  st.perdidas=+document.getElementById('p-perd').value;
+  const sem=getSem(),mats=getMalla().filter(m=>m.s===sem);
+  st.selMats=mats.filter(m=>{const e=document.getElementById('chk-'+m.c);return e&&e.checked;});
+  if(!st.selMats.length)st.selMats=mats;
+  renderCarga();renderNotas();renderCancelar();renderMalla();renderPredHome();
+  autoSave();showPanel('malla','academico');
+}
+
+// ══ MALLA ══
+function getEstado(m){if(st.aprobadas.has(m.c))return'aprobada';if(st.selMats.find(s=>s.c===m.c)){const n=st.notas[m.c]||{};const v=[n.p1,n.p2,n.p3].filter(x=>x!=='').map(Number);if(v.length&&v.reduce((a,b)=>a+b,0)/v.length<2.5)return'en-riesgo';return'en-curso';}return m.pre.every(p=>st.aprobadas.has(p))?'pendiente':'bloqueada';}
+const EL={aprobada:'✓ Aprobada','en-curso':'▶ En curso','en-riesgo':'⚠ En riesgo',pendiente:'○ Pendiente',bloqueada:'🔒 Bloqueada'};
+
+function renderMalla(){
+  const malla=getMalla();const SN=['I','II','III','IV','V','VI','VII','VIII','IX','X'];
+  const sems=[...new Set(malla.map(m=>m.s))].sort((a,b)=>a-b);
+  document.getElementById('malla-grid').innerHTML=sems.map(s=>`<div class="sem-col"><div class="sem-label">Sem.${SN[s-1]}</div>${malla.filter(m=>m.s===s).map(m=>{const est=getEstado(m);return`<div class="mat-node ${est}" onclick="showDetailM('${m.c}')" title="${m.n}">${m.n.length>24?m.n.substring(0,22)+'…':m.n}<div class="mn-cr">${m.cr}cr</div></div>`;}).join('')}</div>`).join('');
+  const total=malla.length,ap=malla.filter(m=>st.aprobadas.has(m.c)).length,pct=Math.round(ap/total*100);
+  document.getElementById('avance-bar').style.width=pct+'%';
+  document.getElementById('avance-txt').textContent=`${ap}/${total} aprobadas (${pct}%)`;
+  renderAprobadasList();
+}
+
+function showDetailM(cod){const malla=getMalla(),m=malla.find(x=>x.c===cod);if(!m)return;const est=getEstado(m);document.getElementById('mat-detail').innerHTML=`<div class="mat-detail"><h3>${m.n}</h3><div class="detail-row"><span>Estado</span><span>${EL[est]}</span></div><div class="detail-row"><span>Créditos</span><span>${m.cr}</span></div><div class="detail-row"><span>Semestre</span><span>${['I','II','III','IV','V','VI','VII','VIII','IX','X'][m.s-1]}</span></div>${m.pre.length?`<div class="detail-row"><span>Prerrequisitos</span><span style="text-align:right;max-width:180px;font-size:11px">${m.pre.map(p=>malla.find(x=>x.c===p)?.n||p).join(', ')}</span></div>`:''}</div>`;}
+
+function renderAprobadasList(){const malla=getMalla();const SN=['I','II','III','IV','V','VI','VII','VIII','IX','X'];const sems=[...new Set(malla.map(m=>m.s))].sort((a,b)=>a-b);document.getElementById('aprobadas-list').innerHTML=sems.map(s=>`<div style="font-size:10px;font-weight:700;color:var(--gris-suave);margin:8px 0 4px;text-transform:uppercase">Semestre ${SN[s-1]}</div><div class="chk-list">${malla.filter(m=>m.s===s).map(m=>`<label class="chk-item"><input type="checkbox" ${st.aprobadas.has(m.c)?'checked':''} onchange="st.aprobadas[this.checked?'add':'delete']('${m.c}');autoSave()"><span>${m.n}</span><span class="badge badge-blue">${m.cr}cr</span></label>`).join('')}</div>`).join('');}
+
+function actualizarMalla(){renderMalla();autoSave();}
+
+// ══ CARGA ══
+function renderCarga(){
+  const mats=st.selMats;const hCl=mats.reduce((s,m)=>s+hC(m),0);const hEst=mats.reduce((s,m)=>s+2+(20/60)*6,0);const hAcad=hCl+hEst;const hFija=(st.hS+st.hT+st.hD+st.hO+2)*6;const libres=168-hFija-hAcad;
+  let col='verde',msg='✅ Carga manejable — tienes espacio para descanso y ocio.';
+  if(libres<5){col='rojo';msg='🚨 Carga crítica — considera reducir materias para evitar fracaso académico.';}
+  else if(libres<15){col='amarillo',msg='⚠️ Carga alta — organízate bien y cuida el descanso.';}
+  document.getElementById('semaforo-box').innerHTML=`<div class="semaforo ${col}"><div class="dot ${col}"></div>${msg}</div>`;
+  document.getElementById('metrics-box').innerHTML=`<div class="metric"><div class="ml">Horas de clase</div><div class="mv">${hCl}</div><div class="ms">por semana</div></div><div class="metric"><div class="ml">Estudio indep.</div><div class="mv">${Math.round(hEst)}</div><div class="ms">por semana</div></div><div class="metric"><div class="ml">Total académico</div><div class="mv">${Math.round(hAcad)}</div><div class="ms">por semana</div></div><div class="metric"><div class="ml">Horas libres</div><div class="mv" style="color:${libres<5?'var(--rojo)':libres<15?'var(--naranja)':'var(--verde-udea)'}">${Math.max(0,Math.round(libres))}</div><div class="ms">estimadas/sem.</div></div>`;
+  let t=`<table class="mat-table"><thead><tr><th>Materia</th><th>Clase</th><th>Estudio</th><th>Total</th></tr></thead><tbody>`;mats.forEach(m=>{const hc=hC(m),he=Math.round(2+(20/60)*6);t+=`<tr><td>${m.n}</td><td>${hc}h</td><td>${he}h</td><td><strong>${hc+he}h</strong></td></tr>`;});t+=`</tbody></table>`;document.getElementById('desglose-box').innerHTML=t;
+  const items=[{l:'Sueño',h:st.hS*6,c:'#90caf9'},{l:'Trabajo',h:st.hT*6,c:'#ef9a9a'},{l:'Desplazamiento',h:st.hD*6,c:'#ffcc80'},{l:'Comida',h:12,c:'#f48fb1'},{l:'Otras',h:st.hO*6,c:'#ce93d8'},{l:'Horas de clase',h:hCl,c:'#80cbc4'},{l:'Estudio indep.',h:Math.round(hEst),c:'#a5d6a7'}];
+  document.getElementById('balance-box').innerHTML=items.filter(i=>i.h).map(i=>{const p=Math.min(100,Math.round(i.h/168*100));return`<div class="balance-item"><div class="balance-label"><span>${i.l}</span><span>${i.h}h (${p}%)</span></div><div class="balance-bar"><div class="balance-fill" style="width:${p}%;background:${i.c}"></div></div></div>`;}).join('')+(libres>0?`<p style="margin-top:10px;font-size:12px;color:var(--gris-suave)">🌙 Horas libres estimadas: <strong>${Math.round(libres)}h</strong>/semana</p>`:``);
+}
+
+// ══ NOTAS ══
+function renderNotas(){
+  st.selMats.forEach(m=>{if(!st.notas[m.c])st.notas[m.c]={p1:'',p2:'',p3:''};});
+  document.getElementById('tabla-notas').innerHTML=st.selMats.map(m=>`<tr><td>${m.n}</td><td><input class="nota-inp" type="number" min="0" max="5" step="0.1" placeholder="—" value="${st.notas[m.c].p1}" oninput="st.notas['${m.c}'].p1=this.value;calcAlertas();autoSave()"></td><td><input class="nota-inp" type="number" min="0" max="5" step="0.1" placeholder="—" value="${st.notas[m.c].p2}" oninput="st.notas['${m.c}'].p2=this.value;calcAlertas();autoSave()"></td><td><input class="nota-inp" type="number" min="0" max="5" step="0.1" placeholder="—" value="${st.notas[m.c].p3}" oninput="st.notas['${m.c}'].p3=this.value;calcAlertas();autoSave()"></td><td id="est-${m.c}"></td></tr>`).join('');
+}
+
+function calcAlertas(){
+  let al=[];
+  st.selMats.forEach(m=>{const n=st.notas[m.c]||{};const v=[n.p1,n.p2,n.p3].filter(x=>x!=='').map(Number);if(!v.length)return;const p=v.reduce((a,b)=>a+b,0)/v.length;const el=document.getElementById('est-'+m.c);if(p>=3){if(el)el.innerHTML=`<span class="badge badge-green">✓</span>`;}else if(p>=2.5){if(el)el.innerHTML=`<span class="badge badge-orange">!</span>`;al.push({t:'warning',n:m.n,msg:`Promedio ${p.toFixed(1)} — riesgo de pérdida.`});}else{if(el)el.innerHTML=`<span class="badge badge-red">✗</span>`;al.push({t:'danger',n:m.n,msg:`Promedio ${p.toFixed(1)} — considera cancelar o busca asesoría urgente.`});}});
+  document.getElementById('alertas-box').innerHTML=al.length?al.map(a=>`<div class="alerta ${a.t}">⚠️ <div><strong>${a.n}</strong><br>${a.msg}</div></div>`).join(''):`<div class="alerta success">✅ Todo en orden — sigue así.</div>`;
+}
+
+// ══ CANCELAR ══
+function renderCancelar(){const sel=document.getElementById('sel-cancelar');sel.innerHTML='<option value="">-- elige una materia --</option>';st.selMats.forEach(m=>{sel.innerHTML+=`<option value="${m.c}">${m.n}</option>`;});}
+function analizarCancel(){
+  const cod=document.getElementById('sel-cancelar').value;if(!cod){document.getElementById('cancelar-result').innerHTML='';return;}
+  const malla=getMalla(),mat=malla.find(m=>m.c===cod);if(!mat)return;
+  const bl=malla.filter(m=>m.pre.includes(cod)),co=malla.filter(m=>m.co.includes(cod)||mat.co.includes(m.c));
+  let html=`<div class="section-card"><div class="section-card-header">⚠️ Impacto de cancelar: ${mat.n}</div><div class="section-card-body">`;
+  if(!bl.length&&!co.length)html+=`<div class="prereq-item libre">✅ Sin impacto en la malla — puedes cancelar sin bloquear otras asignaturas.</div>`;
+  else{if(bl.length){html+=`<p style="font-size:12px;color:var(--gris-suave);margin-bottom:8px">🔒 Asignaturas que quedarían bloqueadas:</p>`;bl.forEach(m=>{html+=`<div class="prereq-item bloqueado"><strong>${m.n}</strong><span class="sem-chip">Sem.${m.s}</span></div>`;});const ms=Math.max(...bl.map(m=>m.s),0);if(ms>0)html+=`<div class="alerta warning" style="margin-top:10px">📅 Atraso estimado: <strong>${ms-mat.s} semestre(s)</strong></div>`;}
+  if(co.length){html+=`<p style="font-size:12px;color:var(--gris-suave);margin:10px 0 8px">🔄 Correquisitos afectados:</p>`;co.forEach(m=>{html+=`<div class="prereq-item correq"><strong>${m.n}</strong></div>`;});}}
+  html+=`</div></div>`;document.getElementById('cancelar-result').innerHTML=html;
+}
+
+// ══ IA ══
+async function pedirIA(){
+  const prog=PROGRAMAS[st.progId];
+  const resumen=st.selMats.map(m=>{const n=st.notas[m.c]||{};const v=[n.p1,n.p2,n.p3].filter(x=>x!=='').map(Number);const p=v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):null;return`• ${m.n} (${m.cr}cr)${p?` — promedio: ${p}`:''}`;}).join('\n');
+  document.getElementById('ia-resp').innerHTML=`<div class="ia-box" style="color:var(--gris-suave)">✨ Analizando tu situación...</div>`;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:800,messages:[{role:'user',content:`Eres asesor académico de la Universidad de Antioquia — Facultad de Ingeniería.\n\nEstudiante de ${prog.nombre} (${prog.modalidad}) — Semestre ${st.semestre}\nPromedio acumulado: ${st.promAcum} | Créditos aprobados: ${st.creditos}\nTrabajo: ${st.hT}h/día | Desplazamiento: ${st.hD}h/día | Pérdidas previas: ${st.perdidas}\n\nMaterias en curso:\n${resumen}\n\nDa 4-5 recomendaciones concretas, empáticas y prácticas en español. Considera gestión del tiempo, riesgo académico y estrategias de estudio.`}]})});
+    const data=await r.json();
+    document.getElementById('ia-resp').innerHTML=`<div class="ia-box">${data.content.filter(b=>b.type==='text').map(b=>b.text).join('')}</div>`;
+  }catch(e){
+    document.getElementById('ia-resp').innerHTML=`<div class="ia-box" style="color:var(--rojo)">⚠️ Para usar las recomendaciones con IA necesitas configurar tu API key de Anthropic en el archivo HTML (variable ANTHROPIC_API_KEY).</div>`;
+  }
+}
+
+// ══ PREDICTIVO ══
+function renderPredHome(){
+  const p=getPerfil();const riesgos=p.notas.map(n=>predR({...p,notaBase:n}));const maxR=Math.max(...riesgos,0);const deser=predD(p);const semR=predG(p);const crR=colorR(maxR),crD=colorR(deser);
+  document.getElementById('pred-home-cards').innerHTML=`
+    <div class="pred-card riesgo" onclick="showPanel('pred-riesgo','predictivo')"><div class="pc-ico">⚠️</div><div class="pc-title">Riesgo pérdida</div><div class="pc-val" style="color:${crR.c}">${Math.round(maxR*100)}%</div><div class="pc-sub">máximo entre materias</div></div>
+    <div class="pred-card grad" onclick="showPanel('pred-grad','predictivo')"><div class="pc-ico">📅</div><div class="pc-title">Graduación</div><div class="pc-val">${semR}</div><div class="pc-sub">semestres restantes</div></div>
+    <div class="pred-card rec" onclick="showPanel('pred-rec','predictivo')"><div class="pc-ico">💡</div><div class="pc-title">Próximo semestre</div><div class="pc-val">${Math.max(1,Math.round((168-(st.hS+st.hT+st.hD+st.hO+2)*6)/14))}</div><div class="pc-sub">materias recomendadas</div></div>
+    <div class="pred-card deser" onclick="showPanel('pred-deser','predictivo')"><div class="pc-ico">🛡</div><div class="pc-title">Riesgo deserción</div><div class="pc-val" style="color:${crD.c}">${Math.round(deser*100)}%</div><div class="pc-sub">probabilidad estimada</div></div>`;
+  const alertas=[];
+  if(maxR>=0.65)alertas.push({t:'danger',msg:`Riesgo alto de pérdida detectado (${Math.round(maxR*100)}%). Actúa esta semana.`});
+  if(deser>=0.5)alertas.push({t:'danger',msg:`Riesgo de deserción elevado (${Math.round(deser*100)}%). Contacta Bienestar Universitario.`});
+  if(semR>8)alertas.push({t:'warning',msg:`Estimamos ${semR} semestres adicionales. Considera optimizar tu ruta académica.`});
+  document.getElementById('pred-alertas-box').innerHTML=alertas.length?alertas.map(a=>`<div class="alerta ${a.t}">${a.t==='danger'?'🚨':'⚠️'} ${a.msg}</div>`).join(''):'';
+}
+
+function renderPredRiesgo(){
+  const p=getPerfil();const nombres=st.selMats.map(m=>m.n);
+  const res=p.notas.map((n,i)=>({nombre:nombres[i]||`Materia ${i+1}`,nota:n,prob:predR({...p,notaBase:n})})).sort((a,b)=>b.prob-a.prob);
+  document.getElementById('pred-riesgo-res').innerHTML=res.map(r=>{const cr=colorR(r.prob),pct=Math.round(r.prob*100);return`<div class="factor-row"><span class="factor-name">${r.nombre}</span><span style="font-size:11px;color:var(--gris-suave)">nota:${r.nota.toFixed(1)}</span><div class="factor-bar-wrap"><div class="factor-bar-fill" style="width:${pct}%;background:${cr.c}"></div></div><span class="factor-val" style="color:${cr.c}">${pct}%</span><span class="badge ${cr.cls}">${cr.l}</span></div>`;}).join('');
+  const pesos=FR.map((f,i)=>({f,w:Math.abs(MR.w[i])})).sort((a,b)=>b.w-a.w);const maxW=pesos[0].w;
+  const FL={trabajo:'Horas de trabajo',desplaz:'Desplazamiento',materias:'N.° materias',notaBase:'Nota parcial',perdidas:'Pérdidas previas',canceladas:'Cancelaciones'};
+  document.getElementById('pred-factores').innerHTML=pesos.map(({f,w})=>`<div class="factor-row"><span class="factor-name">${FL[f]||f}</span><div class="factor-bar-wrap"><div class="factor-bar-fill" style="width:${Math.round(w/maxW*100)}%"></div></div><span class="factor-val">${Math.round(w/maxW*100)}%</span></div>`).join('');
+}
+
+function renderPredGrad(){
+  const p=getPerfil();const semR=predG(p);const SN=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
+  const anio=new Date().getFullYear();const anioG=anio+Math.ceil(semR/2);
+  document.getElementById('grad-metrics').innerHTML=`<div class="metric"><div class="ml">Semestres restantes</div><div class="mv" style="color:${semR>8?'var(--rojo)':semR>5?'var(--naranja)':'var(--verde-udea)'}">${semR}</div></div><div class="metric"><div class="ml">Año estimado</div><div class="mv">${anioG}</div></div><div class="metric"><div class="ml">Duración total</div><div class="mv">${((p.semestre+semR)/2).toFixed(1)}a</div></div>`;
+  const total=p.semestre+semR;
+  document.getElementById('grad-timeline').innerHTML='<div>'+Array.from({length:Math.min(total,12)},(_,i)=>{const s=i+1;const t=s<p.semestre?'pasado':s===p.semestre?'actual':s===total?'meta':'futuro';return`<div class="tl-item"><div class="tl-dot ${t}"></div><div><div style="font-size:12px;font-weight:600">${SN[s-1]||'S'+s}${s===total?' — 🎓 <strong>Grado estimado</strong>':''}</div><div style="font-size:11px;color:var(--gris-suave)">${s<p.semestre?'Completado':s===p.semestre?'Semestre actual':s===total?'Meta de graduación':'Proyectado'}</div></div></div>`;}).join('')+'</div>';
+  const opt=predG({...p,perdidas:0,trabajo:Math.max(0,p.trabajo-2)});const pes=predG({...p,perdidas:p.perdidas+2});
+  document.getElementById('grad-escenarios').innerHTML=`<div class="rec-item baja"><div class="ri-ico">📈</div><div><div class="ri-title">Optimista</div><div class="ri-desc">${opt} semestres — si reduces carga laboral y no pierdes materias.</div></div></div><div class="rec-item media"><div class="ri-ico">➡️</div><div><div class="ri-title">Actual</div><div class="ri-desc">${semR} semestres — manteniendo tu ritmo actual.</div></div></div><div class="rec-item alta"><div class="ri-ico">📉</div><div><div class="ri-title">Pesimista</div><div class="ri-desc">${pes} semestres — si pierdes 2 materias más este semestre.</div></div></div>`;
+}
+
+function renderPredRec(){
+  const p=getPerfil();const hDisp=168-(p.trabajo+p.desplaz+st.hS+st.hO+2)*6;const matR=hDisp>60?6:hDisp>45?5:hDisp>30?4:3;const deser=predD(p);
+  const recs=[];
+  if(p.materias>matR)recs.push({nv:'alta',ico:'⚠️',t:`Reduce a ${matR} materias`,d:`Con ${p.trabajo}h trabajo y ${p.desplaz}h desplazamiento tienes ${Math.round(hDisp)}h disponibles. Tu carga actual genera sobrecarga.`});
+  else if(p.materias<matR-1)recs.push({nv:'baja',ico:'📈',t:`Puedes agregar ${matR-p.materias} materia(s)`,d:`Tu disponibilidad (${Math.round(hDisp)}h/sem) soporta hasta ${matR} materias cómodamente.`});
+  else recs.push({nv:'baja',ico:'✅',t:'Carga adecuada',d:`${p.materias} materias es ideal para tu disponibilidad actual.`});
+  if(p.perdidas>0)recs.push({nv:'media',ico:'🔄',t:'Prioriza materias por repetir',d:`${p.perdidas} materia(s) pendiente(s). Aprobarlas desbloquea la malla y acelera tu graduación.`});
+  if(p.promAcum<3.0)recs.push({nv:'alta',ico:'📚',t:'Refuerza materias de alto peso',d:'Tu promedio está bajo 3.0. Busca monitorías o grupos de estudio para las materias de mayor crédito.'});
+  if(deser>0.5)recs.push({nv:'alta',ico:'💙',t:'Busca apoyo en Bienestar Universitario',d:'Tu perfil muestra factores de riesgo. La UdeA tiene programas gratuitos de apoyo académico, psicológico y económico.'});
+  document.getElementById('pred-rec-res').innerHTML=recs.map(r=>`<div class="rec-item ${r.nv}"><div class="ri-ico">${r.ico}</div><div><div class="ri-title">${r.t}</div><div class="ri-desc">${r.d}</div></div></div>`).join('');
+}
+
+function renderPredDeser(){
+  const p=getPerfil();const prob=predD(p);const pct=Math.round(prob*100);const col=pct>=60?'#c62828':pct>=35?'#ff6f00':'#2e7d32';const nv=pct>=60?'Alto':pct>=35?'Medio':'Bajo';
+  const cx=90,cy=85,r=70;const ang=Math.PI+Math.PI*prob;const x1=cx+r*Math.cos(Math.PI),y1=cy+r*Math.sin(Math.PI),x2=cx+r*Math.cos(ang),y2=cy+r*Math.sin(ang);const la=prob>0.5?1:0;
+  document.getElementById('pred-deser-res').innerHTML=`<div style="text-align:center;margin-bottom:14px"><svg width="180" height="100" viewBox="0 0 180 100"><path d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}" fill="none" stroke="#e0e0e0" stroke-width="14" stroke-linecap="round"/><path d="M ${x1} ${y1} A ${r} ${r} 0 ${la} 1 ${x2} ${y2}" fill="none" stroke="${col}" stroke-width="14" stroke-linecap="round"/></svg><div style="margin-top:-14px"><div class="gauge-pct" style="color:${col}">${pct}%</div><div class="gauge-sub">Riesgo de deserción — <strong style="color:${col}">${nv}</strong></div></div></div><div class="alerta ${pct>=60?'danger':pct>=35?'warning':'success'}">${pct>=60?'🚨 <strong>Atención:</strong> Tu perfil coincide con patrones de deserción. La intervención temprana puede revertir esta tendencia. Contacta a tu asesor académico.':pct>=35?'⚠️ <strong>Precaución:</strong> Factores de riesgo moderados. Con buena planeación puedes reducir este riesgo.':'✅ <strong>Perfil estable:</strong> Bajo riesgo de abandono. Mantén tus hábitos actuales.'}</div>`;
+  const factores=[{n:'Carga laboral',v:p.trabajo,max:10,r:p.trabajo>6},{n:'Desplazamiento',v:p.desplaz,max:5,r:p.desplaz>2.5},{n:'Pérdidas previas',v:p.perdidas,max:8,r:p.perdidas>2},{n:'Promedio bajo',v:+(5-p.promAcum).toFixed(1),max:5,r:p.promAcum<2.8},{n:'Sobrecarga materias',v:Math.max(0,p.materias-5),max:4,r:p.materias>6}];
+  document.getElementById('pred-deser-factores').innerHTML=factores.map(f=>`<div class="factor-row"><span class="factor-name">${f.n}</span><div class="factor-bar-wrap"><div class="factor-bar-fill" style="width:${Math.min(100,Math.round(parseFloat(f.v)/f.max*100))}%;background:${f.r?'#c62828':'#2e7d32'}"></div></div><span class="factor-val">${f.v}</span>${f.r?`<span class="badge badge-red">riesgo</span>`:''}</div>`).join('');
+}
+
+// ══ NAVEGACIÓN ══
+function showSection(id){
+  document.getElementById('section-academico').style.display=id==='academico'?'block':'none';
+  document.getElementById('section-predictivo').style.display=id==='predictivo'?'block':'none';
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===(id==='academico'?0:1)));
+  if(id==='predictivo'){renderPredHome();renderPredRiesgo();renderPredGrad();renderPredRec();renderPredDeser();}
+}
+
+function showPanel(id,section){
+  const sec=document.getElementById('section-'+section);
+  sec.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  sec.querySelectorAll('.sub-btn').forEach(b=>b.classList.remove('active'));
+  const el=document.getElementById('panel-'+id);if(el)el.classList.add('active');
+  const idx={config:0,malla:1,carga:2,notas:3,cancelar:4,ia:5,'pred-home':0,'pred-riesgo':1,'pred-grad':2,'pred-rec':3,'pred-deser':4}[id];
+  const btns=sec.querySelectorAll('.sub-btn');if(idx!==undefined&&btns[idx])btns[idx].classList.add('active');
+  if(id==='malla')renderMalla();
+  if(id==='pred-riesgo')renderPredRiesgo();
+  if(id==='pred-grad')renderPredGrad();
+  if(id==='pred-rec')renderPredRec();
+  if(id==='pred-deser')renderPredDeser();
+}
+
+function exportar(){
+  const prog=PROGRAMAS[st.progId];const lines=[`PLANEADOR ACADÉMICO UDEA`,`${prog?.nombre} (${prog?.modalidad}) · Sem.${st.semestre}`,`Exportado: ${new Date().toLocaleString('es-CO')}`,``,`── MATERIAS APROBADAS ──`];
+  getMalla().forEach(m=>{if(st.aprobadas.has(m.c))lines.push(`✓ ${m.n}`);});
+  lines.push(``,`── NOTAS ──`);st.selMats.forEach(m=>{const n=st.notas[m.c]||{};const v=[n.p1,n.p2,n.p3].filter(x=>x!=='').map(Number);lines.push(`${m.n}: P1=${n.p1||'—'} P2=${n.p2||'—'} P3=${n.p3||'—'}${v.length?` | Prom=${(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1)}`:''}`);});
+  const p=getPerfil();lines.push(``,`── PREDICCIONES ──`,`Riesgo deserción: ${Math.round(predD(p)*100)}%`,`Semestres restantes: ${predG(p)}`);
+  const blob=new Blob([lines.join('\n')],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`planeador-udea-${new Date().toISOString().slice(0,10)}.txt`;a.click();
+}
+
+function resetear(){if(confirm('¿Borrar todo tu progreso? Esta acción no se puede deshacer.')){localStorage.removeItem(SK);location.reload();}}
+
+// ══ INICIO ══
+(function(){
+  setSave('ok','');
+  const datos=cargarSt();
+  renderProgGrid();
+  if(datos&&st.progId){
+    document.getElementById('main-app').style.display='block';
+    document.getElementById('sem-actual').value=st.semestre;
+    document.getElementById('h-trab').value=st.hT;
+    document.getElementById('h-desp').value=st.hD;
+    document.getElementById('h-suen').value=st.hS;
+    document.getElementById('h-otra').value=st.hO;
+    document.getElementById('p-prom').value=st.promAcum;
+    document.getElementById('p-cred').value=st.creditos;
+    document.getElementById('p-perd').value=st.perdidas;
+    renderMatsCfg();
+    if(st.selMats.length){renderCarga();renderNotas();renderCancelar();renderMalla();renderPredHome();}
+    const saved=new Date(datos.savedAt);
+    document.getElementById('restored-msg').textContent=`Progreso restaurado · Guardado el ${saved.toLocaleDateString('es-CO')} a las ${saved.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})}`;
+    const ban=document.getElementById('restored-banner');ban.style.display='flex';setTimeout(()=>ban.style.display='none',4000);
+    setSave('ok','Progreso restaurado ✓');
+    showPanel('malla','academico');
+  }
+})();
+</script>
+</body>
+</html>
