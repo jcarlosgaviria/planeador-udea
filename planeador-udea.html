@@ -427,32 +427,235 @@
       </div>
 
       <div id="panel-ia" class="panel">
+
+        <!-- API KEY -->
         <div class="section-card">
           <div class="section-card-header">🔑 Configuración de IA</div>
           <div class="section-card-body">
             <p style="font-size:12px;color:var(--gris-suave);margin-bottom:10px">
-              Para activar las recomendaciones con Claude necesitas ingresar tu API key de Anthropic. Se guarda solo en tu navegador y nunca se comparte.
+              Ingresa tu API key de Anthropic para activar todas las funciones de IA. Se guarda solo en tu navegador.
             </p>
             <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-              <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." 
+              <input type="password" id="api-key-input" placeholder="sk-ant-api03-..."
                 style="flex:1;padding:8px 12px;font-size:13px;border:1px solid var(--gris-borde);border-radius:8px;font-family:monospace"
                 oninput="guardarApiKey(this.value)">
               <button class="btn-sm" onclick="toggleVerKey()" id="btn-ver-key">👁 Ver</button>
             </div>
-            <p style="font-size:11px;color:var(--gris-suave);margin-bottom:14px">
-              Obtén tu API key en <a href="https://console.anthropic.com" target="_blank" style="color:var(--azul-medio)">console.anthropic.com</a>
+            <p style="font-size:11px;color:var(--gris-suave);margin-bottom:10px">
+              Obtén tu key en <a href="https://console.anthropic.com" target="_blank" style="color:var(--azul-medio)">console.anthropic.com</a>
             </p>
             <div id="api-key-status"></div>
           </div>
         </div>
-        <div class="section-card" id="ia-panel-recomendaciones">
-          <div class="section-card-header">✨ Recomendaciones personalizadas con IA</div>
-          <div class="section-card-body">
-            <p style="font-size:12px;color:var(--gris-suave);margin-bottom:12px">Análisis basado en tu carga, notas y situación personal usando Claude.</p>
-            <button class="btn-primary" onclick="pedirIA()">✨ Generar recomendaciones ↗</button>
-            <div id="ia-resp"></div>
+
+        <!-- SUB-TABS IA -->
+        <div class="tabs" style="margin-bottom:12px">
+          <button class="tab active" onclick="showIATab('recomendaciones')">✨ Recomendaciones</button>
+          <button class="tab" onclick="showIATab('plan-estudio')">📅 Plan de estudio</button>
+          <button class="tab" onclick="showIATab('analisis-perdida')">🔍 Análisis pérdida</button>
+          <button class="tab" onclick="showIATab('becas')">🎓 Becas y auxilios</button>
+          <button class="tab" onclick="showIATab('quiz')">🧠 Quiz de práctica</button>
+        </div>
+
+        <!-- RECOMENDACIONES -->
+        <div id="ia-tab-recomendaciones" class="ia-tab-panel">
+          <div class="section-card">
+            <div class="section-card-header">✨ Recomendaciones personalizadas</div>
+            <div class="section-card-body">
+              <p style="font-size:12px;color:var(--gris-suave);margin-bottom:12px">
+                Claude analiza tu carga, notas ponderadas y situación personal para darte consejos concretos.
+              </p>
+              <button class="btn-primary" onclick="pedirIA()">✨ Generar recomendaciones ↗</button>
+              <div id="ia-resp"></div>
+            </div>
           </div>
         </div>
+
+        <!-- PLAN DE ESTUDIO -->
+        <div id="ia-tab-plan-estudio" class="ia-tab-panel" style="display:none">
+          <div class="section-card">
+            <div class="section-card-header">📅 Plan de estudio semanal personalizado</div>
+            <div class="section-card-body">
+              <p style="font-size:12px;color:var(--gris-suave);margin-bottom:12px">
+                Claude genera un horario detallado día a día basado en tus materias, notas y tiempo disponible.
+              </p>
+              <div class="form-grid" style="margin-bottom:12px">
+                <div class="form-group">
+                  <label>¿Cuántas horas puedes estudiar por día?</label>
+                  <input type="number" id="plan-horas-dia" value="4" min="1" max="12">
+                </div>
+                <div class="form-group">
+                  <label>¿Tienes parciales próximos?</label>
+                  <select id="plan-parciales">
+                    <option value="no">No por ahora</option>
+                    <option value="semana">Esta semana</option>
+                    <option value="dos-semanas">En dos semanas</option>
+                    <option value="mes">En un mes</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group" style="margin-bottom:12px">
+                <label>¿Qué días puedes estudiar?</label>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+                  ${['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'].map(d=>`
+                  <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer">
+                    <input type="checkbox" class="dia-estudio" value="${d}" checked style="width:auto;margin:0"> ${d}
+                  </label>`).join('')}
+                </div>
+              </div>
+              <button class="btn-primary" onclick="generarPlanEstudio()">📅 Generar plan semanal ↗</button>
+              <div id="plan-estudio-resp"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ANÁLISIS PÉRDIDA -->
+        <div id="ia-tab-analisis-perdida" class="ia-tab-panel" style="display:none">
+          <div class="section-card">
+            <div class="section-card-header">🔍 Análisis de pérdida de materia</div>
+            <div class="section-card-body">
+              <p style="font-size:12px;color:var(--gris-suave);margin-bottom:12px">
+                Claude identifica las causas raíz y te da un plan de acción para retomar la materia con éxito.
+              </p>
+              <div class="form-group" style="margin-bottom:10px">
+                <label>Materia que perdiste o estás en riesgo de perder</label>
+                <select id="mat-perdida-sel">
+                  <option value="">-- elige una materia --</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:10px">
+                <label>¿Qué crees que fue la causa principal?</label>
+                <select id="causa-perdida">
+                  <option value="tiempo">Falta de tiempo para estudiar</option>
+                  <option value="trabajo">Carga laboral alta</option>
+                  <option value="dificultad">La materia es muy difícil</option>
+                  <option value="metodologia">No entendí la metodología del docente</option>
+                  <option value="personal">Problemas personales o de salud</option>
+                  <option value="base">Me faltó base de semestres anteriores</option>
+                  <option value="otro">Otra razón</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:12px">
+                <label>Cuéntame más detalles (opcional)</label>
+                <textarea id="detalle-perdida" placeholder="Ej: Los primeros parciales me fue bien pero en el final me bloqueé..."
+                  style="width:100%;padding:8px 10px;font-size:12px;border:1px solid var(--gris-borde);border-radius:8px;resize:vertical;min-height:70px;font-family:var(--font)"></textarea>
+              </div>
+              <button class="btn-primary" onclick="analizarPerdida()">🔍 Analizar y generar plan ↗</button>
+              <div id="perdida-resp"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BECAS Y AUXILIOS -->
+        <div id="ia-tab-becas" class="ia-tab-panel" style="display:none">
+          <div class="section-card">
+            <div class="section-card-header">🎓 Análisis para becas y auxilios UdeA</div>
+            <div class="section-card-body">
+              <p style="font-size:12px;color:var(--gris-suave);margin-bottom:12px">
+                Claude evalúa tu perfil académico y socioeconómico para identificar becas, auxilios y programas de apoyo disponibles en la UdeA.
+              </p>
+              <div class="form-grid" style="margin-bottom:10px">
+                <div class="form-group">
+                  <label>Estrato socioeconómico</label>
+                  <select id="beca-estrato">
+                    <option value="1">Estrato 1</option>
+                    <option value="2">Estrato 2</option>
+                    <option value="3" selected>Estrato 3</option>
+                    <option value="4">Estrato 4</option>
+                    <option value="5">Estrato 5</option>
+                    <option value="6">Estrato 6</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>¿Eres cabeza de familia?</label>
+                  <select id="beca-cabeza">
+                    <option value="no">No</option>
+                    <option value="si">Sí</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>¿Tienes trabajo actualmente?</label>
+                  <select id="beca-trabajo">
+                    <option value="no">No</option>
+                    <option value="medio">Medio tiempo</option>
+                    <option value="completo">Tiempo completo</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>¿Eres de municipio diferente a Medellín?</label>
+                  <select id="beca-municipio">
+                    <option value="no">No, soy de Medellín</option>
+                    <option value="antioquia">Sí, de otro municipio de Antioquia</option>
+                    <option value="otro">Sí, de otro departamento</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group" style="margin-bottom:12px">
+                <label>¿Tienes alguna condición especial?</label>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+                  ${['Discapacidad','Víctima del conflicto','Comunidad indígena','Comunidad afrocolombiana','Deportista destacado'].map(c=>`
+                  <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer">
+                    <input type="checkbox" class="condicion-especial" value="${c}" style="width:auto;margin:0"> ${c}
+                  </label>`).join('')}
+                </div>
+              </div>
+              <button class="btn-primary" onclick="analizarBecas()">🎓 Analizar opciones de apoyo ↗</button>
+              <div id="becas-resp"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- QUIZ DE PRÁCTICA -->
+        <div id="ia-tab-quiz" class="ia-tab-panel" style="display:none">
+          <div class="section-card">
+            <div class="section-card-header">🧠 Quiz de práctica personalizado</div>
+            <div class="section-card-body">
+              <p style="font-size:12px;color:var(--gris-suave);margin-bottom:12px">
+                Claude genera preguntas de práctica adaptadas a tu carrera y nivel para prepararte para los parciales.
+              </p>
+              <div class="form-grid" style="margin-bottom:10px">
+                <div class="form-group">
+                  <label>Materia para practicar</label>
+                  <select id="quiz-materia-sel">
+                    <option value="">-- elige una materia --</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Número de preguntas</label>
+                  <select id="quiz-num">
+                    <option value="5">5 preguntas</option>
+                    <option value="10" selected>10 preguntas</option>
+                    <option value="15">15 preguntas</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Tipo de preguntas</label>
+                  <select id="quiz-tipo">
+                    <option value="conceptual">Conceptuales (definiciones y teoría)</option>
+                    <option value="aplicacion">De aplicación (ejercicios prácticos)</option>
+                    <option value="mixto" selected>Mixto</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Dificultad</label>
+                  <select id="quiz-dificultad">
+                    <option value="basico">Básico</option>
+                    <option value="intermedio" selected>Intermedio</option>
+                    <option value="avanzado">Avanzado (nivel parcial)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group" style="margin-bottom:12px">
+                <label>Tema específico que quieres practicar (opcional)</label>
+                <input type="text" id="quiz-tema" placeholder="Ej: derivadas, circuitos en serie, gestión de inventarios..."
+                  style="padding:7px 10px;font-size:12px;border:1px solid var(--gris-borde);border-radius:8px;width:100%">
+              </div>
+              <button class="btn-primary" onclick="generarQuiz()">🧠 Generar quiz ↗</button>
+              <div id="quiz-resp"></div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -815,8 +1018,181 @@ function toggleVerKey(){
 }
 function getApiKey(){return localStorage.getItem('udea-api-key')||'';}
 
+// ══ PLAN DE ESTUDIO ══
+async function generarPlanEstudio(){
+  if(!checkKey('plan-estudio-resp')) return;
+  const horasDia=document.getElementById('plan-horas-dia').value;
+  const parciales=document.getElementById('plan-parciales').value;
+  const dias=[...document.querySelectorAll('.dia-estudio:checked')].map(d=>d.value).join(', ');
+  const {prog,resumenNotas}=getInfoEstudiante();
+  document.getElementById('plan-estudio-resp').innerHTML=`<div class="ia-box" style="color:var(--gris-suave);margin-top:10px">📅 Generando tu plan de estudio personalizado...</div>`;
+  try{
+    const txt=await llamarClaude(`Eres un asesor académico experto de la Universidad de Antioquia — Facultad de Ingeniería.
+
+Estudiante de ${prog.nombre} (${prog.modalidad}) — Semestre ${st.semestre}
+Promedio acumulado: ${st.promAcum} | Trabaja: ${st.hT}h/día | Desplazamiento: ${st.hD}h/día
+
+Materias matriculadas con notas actuales:
+${resumenNotas}
+
+Disponibilidad para estudiar:
+- Días disponibles: ${dias}
+- Horas disponibles por día: ${horasDia} horas
+- Situación de parciales: ${parciales==='no'?'Sin parciales próximos':parciales==='semana'?'Parciales esta semana':parciales==='dos-semanas'?'Parciales en dos semanas':'Parciales en un mes'}
+
+Genera un plan de estudio semanal DETALLADO en español con:
+1. Un horario día a día (con horas específicas) para cada día disponible
+2. Asigna más tiempo a las materias con notas más bajas
+3. Incluye descansos de 10 minutos cada hora
+4. Sugiere qué temas específicos trabajar en cada sesión
+5. Da 3 consejos de productividad personalizados para su situación
+
+Sé muy específico con los horarios. Ejemplo: "Lunes 7:00-9:00: Cálculo diferencial — ejercicios de límites".`);
+    document.getElementById('plan-estudio-resp').innerHTML=`<div class="ia-box" style="margin-top:10px">${txt}</div>`;
+  }catch(e){
+    document.getElementById('plan-estudio-resp').innerHTML=`<div class="alerta danger" style="margin-top:10px">⚠️ Error: ${e.message}</div>`;
+  }
+}
+
+// ══ ANÁLISIS PÉRDIDA ══
+async function analizarPerdida(){
+  if(!checkKey('perdida-resp')) return;
+  const matSel=document.getElementById('mat-perdida-sel').value;
+  const causa=document.getElementById('causa-perdida').value;
+  const detalle=document.getElementById('detalle-perdida').value;
+  const malla=getMalla();
+  const mat=malla.find(m=>m.c===matSel)||{n:'materia seleccionada'};
+  const nd=calcNotaDefinitiva(matSel);
+  const {prog}=getInfoEstudiante();
+  const bloqueadas=malla.filter(m=>m.pre.includes(matSel));
+  document.getElementById('perdida-resp').innerHTML=`<div class="ia-box" style="color:var(--gris-suave);margin-top:10px">🔍 Analizando la situación...</div>`;
+  try{
+    const txt=await llamarClaude(`Eres un asesor académico empático y experto de la Universidad de Antioquia.
+
+Estudiante de ${prog.nombre} — Semestre ${st.semestre}
+Promedio acumulado: ${st.promAcum}
+Trabaja: ${st.hT}h/día
+
+Materia en situación crítica: ${mat.n} (${mat.cr} créditos)
+Nota definitiva parcial actual: ${nd!==null?nd.toFixed(2):'Sin notas registradas'}
+Materias que bloquearía si la pierde: ${bloqueadas.length?bloqueadas.map(m=>m.n).join(', '):'Ninguna directamente'}
+
+Causa principal identificada por el estudiante: ${causa}
+Detalles adicionales: ${detalle||'No especificó detalles adicionales'}
+
+Genera un análisis COMPLETO y EMPÁTICO en español que incluya:
+
+1. **Diagnóstico** — Explica por qué esta causa específica afecta el rendimiento académico
+2. **Impacto en la malla** — Consecuencias concretas de perder esta materia
+3. **Plan de acción inmediato** — 5 pasos concretos para los próximos 15 días
+4. **Estrategias de estudio específicas** — Para esta materia en particular
+5. **Recursos disponibles en la UdeA** — Monitorías, tutorías, bienestar universitario
+6. **Decisión sobre cancelación** — ¿Vale la pena seguir o es mejor cancelar? Argumenta claramente
+
+Sé directo pero muy empático. El estudiante necesita apoyo real, no frases vacías.`);
+    document.getElementById('perdida-resp').innerHTML=`<div class="ia-box" style="margin-top:10px">${txt}</div>`;
+  }catch(e){
+    document.getElementById('perdida-resp').innerHTML=`<div class="alerta danger" style="margin-top:10px">⚠️ Error: ${e.message}</div>`;
+  }
+}
+
+// ══ BECAS Y AUXILIOS ══
+async function analizarBecas(){
+  if(!checkKey('becas-resp')) return;
+  const estrato=document.getElementById('beca-estrato').value;
+  const cabeza=document.getElementById('beca-cabeza').value;
+  const trabajo=document.getElementById('beca-trabajo').value;
+  const municipio=document.getElementById('beca-municipio').value;
+  const condiciones=[...document.querySelectorAll('.condicion-especial:checked')].map(c=>c.value);
+  const {prog}=getInfoEstudiante();
+  document.getElementById('becas-resp').innerHTML=`<div class="ia-box" style="color:var(--gris-suave);margin-top:10px">🎓 Analizando tu perfil para becas y auxilios...</div>`;
+  try{
+    const txt=await llamarClaude(`Eres un experto en bienestar universitario de la Universidad de Antioquia (UdeA) en Medellín, Colombia.
+
+Perfil del estudiante:
+- Programa: ${prog.nombre} (${prog.modalidad})
+- Semestre: ${st.semestre}
+- Promedio acumulado: ${st.promAcum}
+- Créditos aprobados: ${st.creditos}
+- Estrato socioeconómico: ${estrato}
+- Cabeza de familia: ${cabeza==='si'?'Sí':'No'}
+- Situación laboral: ${trabajo==='no'?'No trabaja':trabajo==='medio'?'Trabaja medio tiempo':'Trabaja tiempo completo'}
+- Procedencia: ${municipio==='no'?'Medellín':municipio==='antioquia'?'Otro municipio de Antioquia':'Otro departamento'}
+- Condiciones especiales: ${condiciones.length?condiciones.join(', '):'Ninguna'}
+
+Basándote en el Reglamento Estudiantil de la UdeA y los programas de Bienestar Universitario, genera un análisis DETALLADO en español que incluya:
+
+1. **Becas y descuentos de matrícula** a los que podría aplicar según su estrato y rendimiento
+2. **Auxilios económicos** disponibles en Bienestar Universitario UdeA
+3. **Programas de alimentación y transporte** para estudiantes
+4. **Apoyos especiales** según sus condiciones particulares
+5. **Pasos concretos** para aplicar a cada beneficio (dónde ir, qué documentos llevar)
+6. **Fechas importantes** de convocatorias (menciona que debe verificar en bienestar.udea.edu.co)
+7. **Recomendación prioritaria** — ¿Por cuál beneficio debe aplicar primero?
+
+Sé muy específico con los nombres de los programas reales de la UdeA. Si no estás seguro de un dato específico, indícalo claramente.`);
+    document.getElementById('becas-resp').innerHTML=`<div class="ia-box" style="margin-top:10px">${txt}</div>`;
+  }catch(e){
+    document.getElementById('becas-resp').innerHTML=`<div class="alerta danger" style="margin-top:10px">⚠️ Error: ${e.message}</div>`;
+  }
+}
+
+// ══ QUIZ DE PRÁCTICA ══
+async function generarQuiz(){
+  if(!checkKey('quiz-resp')) return;
+  const matCod=document.getElementById('quiz-materia-sel').value;
+  const num=document.getElementById('quiz-num').value;
+  const tipo=document.getElementById('quiz-tipo').value;
+  const dificultad=document.getElementById('quiz-dificultad').value;
+  const tema=document.getElementById('quiz-tema').value;
+  const malla=getMalla();
+  const mat=malla.find(m=>m.c===matCod)||{n:'la materia seleccionada'};
+  const {prog}=getInfoEstudiante();
+  document.getElementById('quiz-resp').innerHTML=`<div class="ia-box" style="color:var(--gris-suave);margin-top:10px">🧠 Generando preguntas de práctica...</div>`;
+  try{
+    const txt=await llamarClaude(`Eres un docente experto de la Facultad de Ingeniería de la Universidad de Antioquia.
+
+Estudiante de ${prog.nombre} — Semestre ${st.semestre}
+Materia: ${mat.n}
+${tema?`Tema específico: ${tema}`:''}
+
+Genera exactamente ${num} preguntas de práctica en español con estas características:
+- Tipo: ${tipo==='conceptual'?'Solo preguntas conceptuales de definición y teoría':tipo==='aplicacion'?'Solo ejercicios de aplicación práctica':'Mezcla de conceptuales y de aplicación'}
+- Dificultad: ${dificultad==='basico'?'Básico (comprensión fundamental)':dificultad==='intermedio'?'Intermedio (aplicación estándar)':'Avanzado (nivel de parcial universitario)'}
+
+Para cada pregunta incluye:
+1. La pregunta claramente formulada
+2. En preguntas de selección múltiple: 4 opciones (A, B, C, D)
+3. La respuesta correcta marcada claramente
+4. Una explicación breve de por qué esa es la respuesta correcta
+5. El concepto clave que evalúa
+
+Numera cada pregunta. Separa cada pregunta con una línea en blanco.
+Al final incluye un resumen de los temas evaluados y recomendaciones de estudio.`);
+    document.getElementById('quiz-resp').innerHTML=`<div class="ia-box" style="margin-top:10px">${txt}</div>`;
+  }catch(e){
+    document.getElementById('quiz-resp').innerHTML=`<div class="alerta danger" style="margin-top:10px">⚠️ Error: ${e.message}</div>`;
+  }
+}
+
 // ══ CANCELAR ══
-function renderCancelar(){const sel=document.getElementById('sel-cancelar');sel.innerHTML='<option value="">-- elige una materia --</option>';st.selMats.forEach(m=>{sel.innerHTML+=`<option value="${m.c}">${m.n}</option>`;});}
+function renderCancelar(){
+  const sel=document.getElementById('sel-cancelar');
+  sel.innerHTML='<option value="">-- elige una materia --</option>';
+  st.selMats.forEach(m=>{sel.innerHTML+=`<option value="${m.c}">${m.n}</option>`;});
+  // Llenar también selectores de IA
+  const selPerdida=document.getElementById('mat-perdida-sel');
+  const selQuiz=document.getElementById('quiz-materia-sel');
+  const malla=getMalla();
+  if(selPerdida){
+    selPerdida.innerHTML='<option value="">-- elige una materia --</option>';
+    malla.forEach(m=>{selPerdida.innerHTML+=`<option value="${m.c}">${m.n}</option>`;});
+  }
+  if(selQuiz){
+    selQuiz.innerHTML='<option value="">-- elige una materia --</option>';
+    st.selMats.forEach(m=>{selQuiz.innerHTML+=`<option value="${m.c}">${m.n}</option>`;});
+  }
+}
 function analizarCancel(){
   const cod=document.getElementById('sel-cancelar').value;if(!cod){document.getElementById('cancelar-result').innerHTML='';return;}
   const malla=getMalla(),mat=malla.find(m=>m.c===cod);if(!mat)return;
@@ -826,6 +1202,51 @@ function analizarCancel(){
   else{if(bl.length){html+=`<p style="font-size:12px;color:var(--gris-suave);margin-bottom:8px">🔒 Asignaturas que quedarían bloqueadas:</p>`;bl.forEach(m=>{html+=`<div class="prereq-item bloqueado"><strong>${m.n}</strong><span class="sem-chip">Sem.${m.s}</span></div>`;});const ms=Math.max(...bl.map(m=>m.s),0);if(ms>0)html+=`<div class="alerta warning" style="margin-top:10px">📅 Atraso estimado: <strong>${ms-mat.s} semestre(s)</strong></div>`;}
   if(co.length){html+=`<p style="font-size:12px;color:var(--gris-suave);margin:10px 0 8px">🔄 Correquisitos afectados:</p>`;co.forEach(m=>{html+=`<div class="prereq-item correq"><strong>${m.n}</strong></div>`;});}}
   html+=`</div></div>`;document.getElementById('cancelar-result').innerHTML=html;
+}
+
+// ══ NAVEGACIÓN TABS IA ══
+function showIATab(id){
+  document.querySelectorAll('.ia-tab-panel').forEach(p=>p.style.display='none');
+  document.getElementById('ia-tab-'+id).style.display='block';
+  document.querySelectorAll('#panel-ia .tab').forEach((b,i)=>{
+    const ids=['recomendaciones','plan-estudio','analisis-perdida','becas','quiz'];
+    b.classList.toggle('active',ids[i]===id);
+  });
+}
+
+// ══ HELPER IA ══
+async function llamarClaude(prompt){
+  const apiKey=getApiKey();
+  if(!apiKey||!apiKey.startsWith('sk-ant')){
+    return null;
+  }
+  const r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1200,messages:[{role:'user',content:prompt}]})
+  });
+  const data=await r.json();
+  if(data.error) throw new Error(data.error.message);
+  return data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+}
+
+function checkKey(elId){
+  if(!getApiKey()||!getApiKey().startsWith('sk-ant')){
+    document.getElementById(elId).innerHTML=`<div class="alerta warning" style="margin-top:10px">⚠️ Primero ingresa tu API key en la sección de configuración de IA arriba.</div>`;
+    return false;
+  }
+  return true;
+}
+
+function getInfoEstudiante(){
+  const prog=PROGRAMAS[st.progId];
+  const resumenNotas=st.selMats.map(m=>{
+    const nd=calcNotaDefinitiva(m.c);
+    const evs=st.notas[m.c]?.evals||[];
+    const detalle=evs.filter(e=>e.nota!=='').map(e=>`${e.nombre}(${e.pct}%):${e.nota}`).join(', ');
+    return `• ${m.n} (${m.cr}cr)${nd!==null?` — definitiva parcial: ${nd.toFixed(2)}`:''}${detalle?` [${detalle}]`:''}`;
+  }).join('\n');
+  return {prog, resumenNotas};
 }
 
 // ══ IA ══
