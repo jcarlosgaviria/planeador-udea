@@ -403,15 +403,12 @@
 
       <div id="panel-notas" class="panel">
         <div class="section-card">
-          <div class="section-card-header">📊 Notas parciales</div>
+          <div class="section-card-header">📊 Notas por materia</div>
           <div class="section-card-body">
-            <p style="font-size:12px;color:var(--gris-suave);margin-bottom:10px">Ingresa tus notas (0–5). Se guardan automáticamente.</p>
-            <div style="overflow-x:auto">
-              <table class="mat-table">
-                <thead><tr><th>Materia</th><th>Parcial 1</th><th>Parcial 2</th><th>Parcial 3</th><th></th></tr></thead>
-                <tbody id="tabla-notas"></tbody>
-              </table>
-            </div>
+            <p style="font-size:12px;color:var(--gris-suave);margin-bottom:12px">
+              Configura las evaluaciones de cada materia según la distribución que definió tu docente. Los porcentajes deben sumar <strong>100%</strong>.
+            </p>
+            <div id="notas-por-materia"></div>
           </div>
         </div>
         <div id="alertas-box"></div>
@@ -431,6 +428,24 @@
 
       <div id="panel-ia" class="panel">
         <div class="section-card">
+          <div class="section-card-header">🔑 Configuración de IA</div>
+          <div class="section-card-body">
+            <p style="font-size:12px;color:var(--gris-suave);margin-bottom:10px">
+              Para activar las recomendaciones con Claude necesitas ingresar tu API key de Anthropic. Se guarda solo en tu navegador y nunca se comparte.
+            </p>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+              <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." 
+                style="flex:1;padding:8px 12px;font-size:13px;border:1px solid var(--gris-borde);border-radius:8px;font-family:monospace"
+                oninput="guardarApiKey(this.value)">
+              <button class="btn-sm" onclick="toggleVerKey()" id="btn-ver-key">👁 Ver</button>
+            </div>
+            <p style="font-size:11px;color:var(--gris-suave);margin-bottom:14px">
+              Obtén tu API key en <a href="https://console.anthropic.com" target="_blank" style="color:var(--azul-medio)">console.anthropic.com</a>
+            </p>
+            <div id="api-key-status"></div>
+          </div>
+        </div>
+        <div class="section-card" id="ia-panel-recomendaciones">
           <div class="section-card-header">✨ Recomendaciones personalizadas con IA</div>
           <div class="section-card-body">
             <p style="font-size:12px;color:var(--gris-suave);margin-bottom:12px">Análisis basado en tu carga, notas y situación personal usando Claude.</p>
@@ -614,7 +629,7 @@ function autoSave(){clearTimeout(saveTimer);saveTimer=setTimeout(guardarSt,800);
 function hC(m){if(m.ing)return 4;if(m.cr>=4)return 7;if(m.cr===3)return 4;if(m.cr===2)return 2;return 2;}
 function getSem(){return['I','II','III','IV','V','VI','VII','VIII','IX','X'].indexOf(document.getElementById('sem-actual').value)+1;}
 function getMalla(){return PROGRAMAS[st.progId]?.materias||[];}
-function getPerfil(){return{semestre:getSem(),materias:st.selMats.length,promAcum:st.promAcum,trabajo:st.hT,desplaz:st.hD,perdidas:st.perdidas,canceladas:0,notas:st.selMats.map(m=>{const n=st.notas[m.c]||{};const v=[n.p1,n.p2,n.p3].filter(x=>x!=='').map(Number);return v.length?v.reduce((a,b)=>a+b,0)/v.length:st.promAcum;})};}
+function getPerfil(){return{semestre:getSem(),materias:st.selMats.length,promAcum:st.promAcum,trabajo:st.hT,desplaz:st.hD,perdidas:st.perdidas,canceladas:0,notas:st.selMats.map(m=>{const nd=calcNotaDefinitiva(m.c);return nd!==null?nd:st.promAcum;})};}
 
 // ══ PROG GRID ══
 function renderProgGrid(){document.getElementById('prog-grid').innerHTML=Object.entries(PROGRAMAS).map(([id,p])=>`<div class="prog-card${id===st.progId?' active':''}" id="pc-${id}" onclick="selProg('${id}')">${id===st.progId?`<span class="saved">guardado</span>`:''}<div class="pn">${p.nombre}</div><div class="pm">${p.modalidad==='Virtual'?'💻':'🏫'} ${p.modalidad} · ${p.creditos}cr</div></div>`).join('');}
@@ -682,17 +697,123 @@ function renderCarga(){
   document.getElementById('balance-box').innerHTML=items.filter(i=>i.h).map(i=>{const p=Math.min(100,Math.round(i.h/168*100));return`<div class="balance-item"><div class="balance-label"><span>${i.l}</span><span>${i.h}h (${p}%)</span></div><div class="balance-bar"><div class="balance-fill" style="width:${p}%;background:${i.c}"></div></div></div>`;}).join('')+(libres>0?`<p style="margin-top:10px;font-size:12px;color:var(--gris-suave)">🌙 Horas libres estimadas: <strong>${Math.round(libres)}h</strong>/semana</p>`:``);
 }
 
-// ══ NOTAS ══
+// ══ NOTAS FLEXIBLES CON PORCENTAJES ══
 function renderNotas(){
-  st.selMats.forEach(m=>{if(!st.notas[m.c])st.notas[m.c]={p1:'',p2:'',p3:''};});
-  document.getElementById('tabla-notas').innerHTML=st.selMats.map(m=>`<tr><td>${m.n}</td><td><input class="nota-inp" type="number" min="0" max="5" step="0.1" placeholder="—" value="${st.notas[m.c].p1}" oninput="st.notas['${m.c}'].p1=this.value;calcAlertas();autoSave()"></td><td><input class="nota-inp" type="number" min="0" max="5" step="0.1" placeholder="—" value="${st.notas[m.c].p2}" oninput="st.notas['${m.c}'].p2=this.value;calcAlertas();autoSave()"></td><td><input class="nota-inp" type="number" min="0" max="5" step="0.1" placeholder="—" value="${st.notas[m.c].p3}" oninput="st.notas['${m.c}'].p3=this.value;calcAlertas();autoSave()"></td><td id="est-${m.c}"></td></tr>`).join('');
+  st.selMats.forEach(m=>{
+    if(!st.notas[m.c]||!st.notas[m.c].evals){
+      st.notas[m.c]={evals:[
+        {nombre:'Evaluación 1',pct:33,nota:''},
+        {nombre:'Evaluación 2',pct:33,nota:''},
+        {nombre:'Evaluación 3',pct:34,nota:''},
+      ]};
+    }
+  });
+  document.getElementById('notas-por-materia').innerHTML=st.selMats.map(m=>{
+    const evs=st.notas[m.c].evals;
+    const totalPct=evs.reduce((s,e)=>s+(+e.pct||0),0);
+    const notaDef=calcNotaDefinitiva(m.c);
+    const pctOk=Math.abs(totalPct-100)<0.5;
+    return `<div class="section-card" style="margin-bottom:10px;border-left:3px solid ${notaDef!==null?(notaDef>=3?'var(--verde-medio)':notaDef>=2.5?'var(--naranja)':'var(--rojo)'):'var(--azul-medio)'}">
+      <div class="section-card-header" style="display:flex;justify-content:space-between;align-items:center">
+        <span>📘 ${m.n} <span class="badge badge-blue">${m.cr}cr</span></span>
+        <span style="display:flex;align-items:center;gap:8px">
+          ${notaDef!==null?`<strong style="font-size:14px;color:${notaDef>=3?'var(--verde-udea)':notaDef>=2.5?'var(--naranja)':'var(--rojo)'}">Definitiva: ${notaDef.toFixed(2)}</strong>`:''}
+          <button onclick="agregarEval('${m.c}')" style="padding:3px 10px;font-size:11px;border:1px solid var(--azul-medio);border-radius:6px;background:var(--azul-claro);color:var(--azul-udea);cursor:pointer">+ Agregar</button>
+        </span>
+      </div>
+      <div class="section-card-body" style="padding:10px 14px">
+        <div style="display:grid;grid-template-columns:1fr 80px 80px 40px;gap:6px;padding:4px 0 8px;font-size:10px;color:var(--gris-suave);font-weight:600;text-transform:uppercase">
+          <span>Nombre evaluación</span><span style="text-align:center">%</span><span style="text-align:center">Nota (0-5)</span><span></span>
+        </div>
+        ${evs.map((e,i)=>`
+        <div style="display:grid;grid-template-columns:1fr 80px 80px 40px;gap:6px;align-items:center;padding:5px 0;border-bottom:1px solid var(--gris-borde)">
+          <input type="text" value="${e.nombre}" placeholder="Ej: Parcial 1" 
+            style="padding:5px 8px;font-size:12px;border:1px solid var(--gris-borde);border-radius:6px;width:100%"
+            oninput="st.notas['${m.c}'].evals[${i}].nombre=this.value;autoSave()">
+          <div style="position:relative">
+            <input type="number" value="${e.pct}" min="1" max="100" step="1"
+              style="width:100%;padding:5px 20px 5px 8px;font-size:12px;border:1px solid var(--gris-borde);border-radius:6px;text-align:center"
+              oninput="st.notas['${m.c}'].evals[${i}].pct=+this.value;renderNotas();autoSave()">
+            <span style="position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--gris-suave)">%</span>
+          </div>
+          <input type="number" value="${e.nota}" min="0" max="5" step="0.1" placeholder="—"
+            style="width:100%;padding:5px 8px;font-size:12px;border:1px solid var(--gris-borde);border-radius:6px;text-align:center"
+            oninput="st.notas['${m.c}'].evals[${i}].nota=this.value;renderNotas();calcAlertas();autoSave()">
+          <button onclick="eliminarEval('${m.c}',${i})" style="padding:4px 8px;font-size:12px;border:1px solid #ef9a9a;border-radius:6px;background:var(--rojo-claro);color:var(--rojo);cursor:pointer" title="Eliminar">✕</button>
+        </div>`).join('')}
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid var(--gris-borde)">
+          <span style="font-size:11px;color:${pctOk?'var(--verde-udea)':'var(--rojo)'}">
+            ${pctOk?'✅':'⚠️'} Total porcentajes: <strong>${totalPct}%</strong> ${!pctOk?'— deben sumar 100%':''}
+          </span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  calcAlertas();
+}
+
+function calcNotaDefinitiva(cod){
+  const evs=st.notas[cod]?.evals||[];
+  const conNota=evs.filter(e=>e.nota!==''&&e.nota!==null&&e.nota!==undefined);
+  if(!conNota.length) return null;
+  const totalPct=evs.reduce((s,e)=>s+(+e.pct||0),0);
+  if(Math.abs(totalPct-100)>0.5) return null;
+  const pctConNota=conNota.reduce((s,e)=>s+(+e.pct||0),0);
+  if(!pctConNota) return null;
+  const suma=conNota.reduce((s,e)=>s+(+e.nota*(+e.pct||0)),0);
+  // Nota definitiva proporcional a lo cursado
+  return suma/pctConNota;
+}
+
+function agregarEval(cod){
+  if(!st.notas[cod]) st.notas[cod]={evals:[]};
+  st.notas[cod].evals.push({nombre:`Evaluación ${st.notas[cod].evals.length+1}`,pct:0,nota:''});
+  renderNotas();autoSave();
+}
+
+function eliminarEval(cod,idx){
+  if(st.notas[cod]?.evals.length<=1){alert('Debe haber al menos una evaluación.');return;}
+  st.notas[cod].evals.splice(idx,1);
+  renderNotas();autoSave();
 }
 
 function calcAlertas(){
   let al=[];
-  st.selMats.forEach(m=>{const n=st.notas[m.c]||{};const v=[n.p1,n.p2,n.p3].filter(x=>x!=='').map(Number);if(!v.length)return;const p=v.reduce((a,b)=>a+b,0)/v.length;const el=document.getElementById('est-'+m.c);if(p>=3){if(el)el.innerHTML=`<span class="badge badge-green">✓</span>`;}else if(p>=2.5){if(el)el.innerHTML=`<span class="badge badge-orange">!</span>`;al.push({t:'warning',n:m.n,msg:`Promedio ${p.toFixed(1)} — riesgo de pérdida.`});}else{if(el)el.innerHTML=`<span class="badge badge-red">✗</span>`;al.push({t:'danger',n:m.n,msg:`Promedio ${p.toFixed(1)} — considera cancelar o busca asesoría urgente.`});}});
-  document.getElementById('alertas-box').innerHTML=al.length?al.map(a=>`<div class="alerta ${a.t}">⚠️ <div><strong>${a.n}</strong><br>${a.msg}</div></div>`).join(''):`<div class="alerta success">✅ Todo en orden — sigue así.</div>`;
+  st.selMats.forEach(m=>{
+    const nd=calcNotaDefinitiva(m.c);
+    if(nd===null) return;
+    if(nd>=3){al.push({t:'success',n:m.n,nd});}
+    else if(nd>=2.5){al.push({t:'warning',n:m.n,nd,msg:`Nota definitiva parcial ${nd.toFixed(2)} — riesgo de pérdida.`});}
+    else{al.push({t:'danger',n:m.n,nd,msg:`Nota definitiva parcial ${nd.toFixed(2)} — considera cancelar o busca asesoría urgente.`});}
+  });
+  const enRiesgo=al.filter(a=>a.t!=='success');
+  document.getElementById('alertas-box').innerHTML=enRiesgo.length
+    ?enRiesgo.map(a=>`<div class="alerta ${a.t}">⚠️ <div><strong>${a.n}</strong><br>${a.msg}</div></div>`).join('')
+    :(al.length?`<div class="alerta success">✅ Todo en orden — sigue así.</div>`:'');
 }
+
+// ══ API KEY ══
+function guardarApiKey(val){
+  localStorage.setItem('udea-api-key',val);
+  actualizarEstadoKey(val);
+}
+function actualizarEstadoKey(val){
+  const box=document.getElementById('api-key-status');if(!box)return;
+  if(val&&val.startsWith('sk-ant')){
+    box.innerHTML=`<div class="alerta success">✅ API key válida — las recomendaciones con IA están activadas.</div>`;
+  } else if(val){
+    box.innerHTML=`<div class="alerta warning">⚠️ La key no parece válida. Debe comenzar con "sk-ant..."</div>`;
+  } else {
+    box.innerHTML=`<div class="alerta info">ℹ️ Ingresa tu API key para activar las recomendaciones con IA.</div>`;
+  }
+}
+function toggleVerKey(){
+  const inp=document.getElementById('api-key-input');
+  const btn=document.getElementById('btn-ver-key');
+  if(inp.type==='password'){inp.type='text';btn.textContent='🙈 Ocultar';}
+  else{inp.type='password';btn.textContent='👁 Ver';}
+}
+function getApiKey(){return localStorage.getItem('udea-api-key')||'';}
 
 // ══ CANCELAR ══
 function renderCancelar(){const sel=document.getElementById('sel-cancelar');sel.innerHTML='<option value="">-- elige una materia --</option>';st.selMats.forEach(m=>{sel.innerHTML+=`<option value="${m.c}">${m.n}</option>`;});}
@@ -709,15 +830,30 @@ function analizarCancel(){
 
 // ══ IA ══
 async function pedirIA(){
+  const apiKey=getApiKey();
+  if(!apiKey||!apiKey.startsWith('sk-ant')){
+    document.getElementById('ia-resp').innerHTML=`<div class="ia-box" style="color:var(--rojo)">⚠️ Primero ingresa tu API key de Anthropic en el campo de arriba para activar las recomendaciones con IA.</div>`;
+    return;
+  }
   const prog=PROGRAMAS[st.progId];
-  const resumen=st.selMats.map(m=>{const n=st.notas[m.c]||{};const v=[n.p1,n.p2,n.p3].filter(x=>x!=='').map(Number);const p=v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):null;return`• ${m.n} (${m.cr}cr)${p?` — promedio: ${p}`:''}`;}).join('\n');
+  const resumen=st.selMats.map(m=>{
+    const nd=calcNotaDefinitiva(m.c);
+    const evs=st.notas[m.c]?.evals||[];
+    const detalle=evs.filter(e=>e.nota!=='').map(e=>`${e.nombre}(${e.pct}%): ${e.nota}`).join(', ');
+    return`• ${m.n} (${m.cr}cr)${nd!==null?` — nota definitiva parcial: ${nd.toFixed(2)}`:''}${detalle?`\n  Evaluaciones: ${detalle}`:''}`;
+  }).join('\n');
   document.getElementById('ia-resp').innerHTML=`<div class="ia-box" style="color:var(--gris-suave)">✨ Analizando tu situación...</div>`;
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:800,messages:[{role:'user',content:`Eres asesor académico de la Universidad de Antioquia — Facultad de Ingeniería.\n\nEstudiante de ${prog.nombre} (${prog.modalidad}) — Semestre ${st.semestre}\nPromedio acumulado: ${st.promAcum} | Créditos aprobados: ${st.creditos}\nTrabajo: ${st.hT}h/día | Desplazamiento: ${st.hD}h/día | Pérdidas previas: ${st.perdidas}\n\nMaterias en curso:\n${resumen}\n\nDa 4-5 recomendaciones concretas, empáticas y prácticas en español. Considera gestión del tiempo, riesgo académico y estrategias de estudio.`}]})});
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:800,messages:[{role:'user',content:`Eres asesor académico de la Universidad de Antioquia — Facultad de Ingeniería.\n\nEstudiante de ${prog.nombre} (${prog.modalidad}) — Semestre ${st.semestre}\nPromedio acumulado: ${st.promAcum} | Créditos aprobados: ${st.creditos}\nTrabajo: ${st.hT}h/día | Desplazamiento: ${st.hD}h/día | Pérdidas previas: ${st.perdidas}\n\nMaterias en curso con notas ponderadas:\n${resumen}\n\nDa 4-5 recomendaciones concretas, empáticas y prácticas en español. Considera gestión del tiempo, riesgo académico por materia y estrategias de estudio específicas.`}]})
+    });
     const data=await r.json();
+    if(data.error){throw new Error(data.error.message);}
     document.getElementById('ia-resp').innerHTML=`<div class="ia-box">${data.content.filter(b=>b.type==='text').map(b=>b.text).join('')}</div>`;
   }catch(e){
-    document.getElementById('ia-resp').innerHTML=`<div class="ia-box" style="color:var(--rojo)">⚠️ Para usar las recomendaciones con IA necesitas configurar tu API key de Anthropic en el archivo HTML (variable ANTHROPIC_API_KEY).</div>`;
+    document.getElementById('ia-resp').innerHTML=`<div class="ia-box" style="color:var(--rojo)">⚠️ Error: ${e.message||'No se pudo conectar con la IA. Verifica tu API key.'}</div>`;
   }
 }
 
@@ -810,6 +946,12 @@ function resetear(){if(confirm('¿Borrar todo tu progreso? Esta acción no se pu
 // ══ INICIO ══
 (function(){
   setSave('ok','');
+  // Cargar API key guardada
+  const savedKey=localStorage.getItem('udea-api-key')||'';
+  const keyInput=document.getElementById('api-key-input');
+  if(keyInput&&savedKey){keyInput.value=savedKey;actualizarEstadoKey(savedKey);}
+  else if(keyInput){actualizarEstadoKey('');}
+
   const datos=cargarSt();
   renderProgGrid();
   if(datos&&st.progId){
