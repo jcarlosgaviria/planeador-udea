@@ -311,7 +311,7 @@
 
   <div id="main-app" style="display:none">
     <!-- TABS PRINCIPALES -->
-    <div class="tabs">
+    <div class="tabs" id="section-tabs-main">
       <button class="tab active" onclick="showSection('academico')">📚 Académico</button>
       <button class="tab" onclick="showSection('predictivo')">🧠 Predictivo IA</button>
     </div>
@@ -449,7 +449,7 @@
         </div>
 
         <!-- SUB-TABS IA -->
-        <div class="tabs" style="margin-bottom:12px">
+        <div class="tabs" id="ia-tabs-nav" style="margin-bottom:12px">
           <button class="tab active" onclick="showIATab('recomendaciones')">✨ Recomendaciones</button>
           <button class="tab" onclick="showIATab('plan-estudio')">📅 Plan de estudio</button>
           <button class="tab" onclick="showIATab('analisis-perdida')">🔍 Análisis pérdida</button>
@@ -1207,8 +1207,9 @@ function analizarCancel(){
 // ══ NAVEGACIÓN TABS IA ══
 function showIATab(id){
   document.querySelectorAll('.ia-tab-panel').forEach(p=>p.style.display='none');
-  document.getElementById('ia-tab-'+id).style.display='block';
-  document.querySelectorAll('#panel-ia .tab').forEach((b,i)=>{
+  const el=document.getElementById('ia-tab-'+id);
+  if(el) el.style.display='block';
+  document.querySelectorAll('#ia-tabs-nav .tab').forEach((b,i)=>{
     const ids=['recomendaciones','plan-estudio','analisis-perdida','becas','quiz'];
     b.classList.toggle('active',ids[i]===id);
   });
@@ -1336,7 +1337,7 @@ function renderPredDeser(){
 function showSection(id){
   document.getElementById('section-academico').style.display=id==='academico'?'block':'none';
   document.getElementById('section-predictivo').style.display=id==='predictivo'?'block':'none';
-  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===(id==='academico'?0:1)));
+  document.querySelectorAll('#section-tabs-main .tab').forEach((b,i)=>b.classList.toggle('active',i===(id==='academico'?0:1)));
   if(id==='predictivo'){renderPredHome();renderPredRiesgo();renderPredGrad();renderPredRec();renderPredDeser();}
 }
 
@@ -1397,3 +1398,4 @@ function resetear(){if(confirm('¿Borrar todo tu progreso? Esta acción no se pu
 </script>
 </body>
 </html>
+
